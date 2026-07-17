@@ -1,0 +1,21 @@
+{
+  "name": "portal-clientes-anticaidas",
+  "version": "1.0.0",
+  "description": "Portal de Clientes Anticaidas — datos desde AppSheet + certificados desde SharePoint (Microsoft Graph)",
+  "main": "app.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "sync": "node scripts/sync-once.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "nodemailer": "^6.9.16"
+  }
+}
