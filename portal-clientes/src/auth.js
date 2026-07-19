@@ -35,6 +35,20 @@ function emailDeCliente(rutNorm) {
   return p && p.cliente ? p.cliente.email : '';
 }
 
+/**
+ * Decide a qué dirección se envía el código:
+ *  1) Whitelist de RUTs de prueba -> correo de pruebas (válido en producción).
+ *  2) Override global OTP_TEST_EMAIL -> correo de pruebas (sólo no-producción).
+ *  3) Correo real del cliente.
+ */
+function destinoCodigo(rutNorm, emailCliente) {
+  if (config.otpTestRutsEmail && config.otpTestRuts.includes(rutNorm)) {
+    return config.otpTestRutsEmail;
+  }
+  if (config.otpTestEmail) return config.otpTestEmail;
+  return emailCliente;
+}
+
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
 /**
@@ -60,7 +74,7 @@ async function solicitarCodigo(rutRaw) {
         email,
         intentos: 0,
       });
-      const destino = config.otpTestEmail || email;
+      const destino = destinoCodigo(rut, email);
       try {
         await mailer.enviarCodigo(destino, codigo);
       } catch (e) {

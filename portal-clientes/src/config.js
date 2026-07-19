@@ -8,6 +8,7 @@
 
 require('dotenv').config();
 const path = require('path');
+const { normalizeRut } = require('./util');
 
 const ENV = process.env.NODE_ENV || 'development';
 
@@ -74,10 +75,18 @@ const config = {
   syncIntervalMin: int(process.env.SYNC_INTERVAL_MIN, 10),
   otpTtlMin: int(process.env.OTP_TTL_MIN, 10),
 
-  // Sólo para PRUEBAS: si se define, todos los códigos OTP se envían a esta
-  // dirección en lugar del correo del cliente. Se IGNORA en producción (aunque
-  // quede seteada) para evitar un bypass de login accidental.
+  // Override GLOBAL de pruebas: todos los códigos van a esta dirección. Se
+  // IGNORA en producción (evita bypass accidental de login).
   otpTestEmail: ENV === 'production' ? '' : (process.env.OTP_TEST_EMAIL || ''),
+
+  // Whitelist de RUTs de prueba: SÓLO estos RUTs redirigen su código a
+  // OTP_TEST_RUTS_EMAIL. Funciona incluso en producción (scoped), sin afectar
+  // a los clientes reales. Ej: OTP_TEST_RUTS=76326949-3,60711000-K
+  otpTestRuts: (process.env.OTP_TEST_RUTS || '')
+    .split(',')
+    .map((s) => normalizeRut(s))
+    .filter(Boolean),
+  otpTestRutsEmail: process.env.OTP_TEST_RUTS_EMAIL || '',
 };
 
 module.exports = config;
