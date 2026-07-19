@@ -97,4 +97,20 @@ function portalData(rutNorm) {
   };
 }
 
-module.exports = { portalData, CARPETAS };
+/**
+ * Conjunto de docId que pertenecen a los proyectos de un RUT. Se usa para
+ * autorizar /api/doc: un cliente sólo puede descargar SUS documentos, y un
+ * docId forjado no estará en este set (previene IDOR y acceso cruzado).
+ */
+function docIdsValidos(rutNorm) {
+  const set = new Set();
+  for (const p of store.getProyectosPorRut(rutNorm)) {
+    if (p.estado === 'cancelado') continue;
+    for (const d of (p.docs && p.docs.certificados) || []) {
+      if (d.docId) set.add(d.docId);
+    }
+  }
+  return set;
+}
+
+module.exports = { portalData, CARPETAS, docIdsValidos };

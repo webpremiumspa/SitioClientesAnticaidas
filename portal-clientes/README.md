@@ -95,6 +95,37 @@ public/                frontend React (index.html + js/ + css/ + vendor/)
 data/portal.json       store local (generado; no se versiona)
 ```
 
+## Seguridad
+
+Medidas implementadas:
+- **Datos y código fuera del web**: `DATA_DIR` debe apuntar fuera del docroot;
+  además `data/`, `src/` y `scripts/` llevan `.htaccess` que niega el acceso HTTP.
+- **OTP**: nunca se registra el código en logs cuando hay SMTP; `OTP_TEST_EMAIL`
+  se ignora en producción (evita bypass); cooldown de reenvío por RUT.
+- **Login**: respuesta uniforme (anti-enumeración), rate limiting por IP,
+  regeneración de sesión al autenticar, cookie httpOnly + `sameSite=strict` +
+  `secure` en producción.
+- **/api/doc**: control de pertenencia (un cliente sólo baja SUS documentos);
+  ids de Graph encodeados; nombre de archivo saneado.
+- **Cabeceras**: CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, HSTS
+  (en producción) — aplican a respuestas de Express.
+
+Pendiente / a reforzar en el servidor (ver más abajo):
+- Replicar las cabeceras de seguridad en el `.htaccess` del docroot o en
+  Cloudflare (el HTML lo sirve Apache, no Express).
+- Restringir el origen a IPs de Cloudflare; activar WAF/rate-limit en el edge.
+- Confirmar que la app de AppSheet sea de solo lectura y el permiso Graph
+  `Sites.Selected`.
+- Sustituir el `MemoryStore` de sesión por uno persistente si se escala.
+
+### Checklist para producción (cPanel)
+1. `DATA_DIR=/home/somitalc/portal-data` (fuera del docroot) y borrar el viejo
+   `~/clientes.anticaidas.cl/data/` si existía.
+2. **Quitar** `OTP_TEST_EMAIL`.
+3. Modo **Production** (requiere HTTPS al origen: Cloudflare SSL "Full").
+4. Verificar por HTTP que `data/portal.json`, `src/`, `scripts/`, `stderr.log`
+   den **403/404** (no 200).
+
 ## Puntos a ajustar al integrar con datos reales
 
 - **`src/mapping.js`**: si algún nombre de columna del `Find` de AppSheet no

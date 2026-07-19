@@ -7,6 +7,9 @@
  */
 
 require('dotenv').config();
+const path = require('path');
+
+const ENV = process.env.NODE_ENV || 'development';
 
 function bool(v, def = false) {
   if (v === undefined || v === null || v === '') return def;
@@ -18,9 +21,13 @@ function int(v, def) {
 }
 
 const config = {
-  env: process.env.NODE_ENV || 'development',
+  env: ENV,
   port: int(process.env.PORT, 3000),
   sessionSecret: process.env.SESSION_SECRET || 'dev-insecure-secret-change-me',
+
+  // Directorio del store local. Por seguridad debe estar FUERA del docroot web
+  // (si no, portal.json sería descargable). En cPanel: DATA_DIR=/home/USER/portal-data
+  dataDir: process.env.DATA_DIR || path.join(__dirname, '..', 'data'),
 
   // Si no hay App ID o se fuerza DEMO_MODE, corremos con datos de ejemplo.
   demoMode: bool(process.env.DEMO_MODE, false) || !process.env.APPSHEET_APP_ID,
@@ -68,8 +75,9 @@ const config = {
   otpTtlMin: int(process.env.OTP_TTL_MIN, 10),
 
   // Sólo para PRUEBAS: si se define, todos los códigos OTP se envían a esta
-  // dirección en lugar del correo del cliente. Quitar en producción.
-  otpTestEmail: process.env.OTP_TEST_EMAIL || '',
+  // dirección en lugar del correo del cliente. Se IGNORA en producción (aunque
+  // quede seteada) para evitar un bypass de login accidental.
+  otpTestEmail: ENV === 'production' ? '' : (process.env.OTP_TEST_EMAIL || ''),
 };
 
 module.exports = config;

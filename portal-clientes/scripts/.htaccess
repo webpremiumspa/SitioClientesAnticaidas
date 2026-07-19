@@ -1,0 +1,5 @@
+# Bloquea el acceso web a los scripts de utilidad.
+Require all denied
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>

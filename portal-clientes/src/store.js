@@ -12,12 +12,21 @@
 
 const fs = require('fs');
 const path = require('path');
+const config = require('./config');
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const DATA_DIR = config.dataDir;
 const DB_FILE = path.join(DATA_DIR, 'portal.json');
 
 function ensureDir() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+  // Auto-protección: si esta carpeta cayera dentro del docroot, este .htaccess
+  // impide que Apache sirva portal.json por HTTP (fuga de datos de clientes).
+  const ht = path.join(DATA_DIR, '.htaccess');
+  try {
+    if (!fs.existsSync(ht)) {
+      fs.writeFileSync(ht, 'Require all denied\n<IfModule !mod_authz_core.c>\n  Deny from all\n</IfModule>\n');
+    }
+  } catch (_) { /* si el FS no lo permite, seguimos */ }
 }
 
 let cache = null;

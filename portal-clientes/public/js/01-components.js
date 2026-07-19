@@ -262,8 +262,8 @@ function Login({ onLogin }) {
           <form className="login-card" onSubmit={verificar}>
             <h2>Verifica tu identidad</h2>
             <p className="sub">
-              Enviamos un código de 6 dígitos a{' '}
-              <strong style={{ color: 'var(--ink)', fontFamily: 'var(--font-mono)' }}>{emailMask || 'tu correo'}</strong>.
+              Si el RUT está registrado, enviamos un código de 6 dígitos al{' '}
+              <strong style={{ color: 'var(--ink)' }}>correo de contacto de tu organización</strong>.
             </p>
 
             <div className="field">

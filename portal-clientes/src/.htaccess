@@ -1,0 +1,5 @@
+# Bloquea el acceso web al código del backend (por si el docroot = app root).
+Require all denied
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>

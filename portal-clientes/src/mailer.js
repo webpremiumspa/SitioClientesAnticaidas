@@ -23,13 +23,15 @@ function getTransport() {
 }
 
 async function enviarCodigo(email, codigo) {
-  // En desarrollo, deja el código en el log como respaldo (si el correo no llega).
-  if (config.env !== 'production') {
-    console.log(`[mailer][dev] código para ${email}: ${codigo}`);
-  }
   const t = getTransport();
   if (!t) {
-    console.log(`[mailer] (sin SMTP) código para ${email}: ${codigo}`);
+    // Sólo en desarrollo local SIN SMTP se muestra el código (para poder probar).
+    // Nunca en producción, y nunca si hay SMTP configurado (servidor real).
+    if (config.env !== 'production') {
+      console.log(`[mailer] (local sin SMTP) código de ${email}: ${codigo}`);
+    } else {
+      console.warn('[mailer] SMTP no configurado; no se envió el código.');
+    }
     return { sent: false, demo: true };
   }
   await t.sendMail({

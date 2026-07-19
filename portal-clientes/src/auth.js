@@ -35,34 +35,40 @@ function emailDeCliente(rutNorm) {
   return p && p.cliente ? p.cliente.email : '';
 }
 
+const RESEND_COOLDOWN_MS = 60 * 1000;
+
 /**
- * Paso 1: solicitar código. Devuelve { ok, emailMask } sin filtrar si el RUT
- * existe o no de forma explotable (respuesta uniforme para no permitir
- * enumeración de RUTs válidos).
+ * Paso 1: solicitar código. Respuesta SIEMPRE uniforme (`{ ok: true }`), no
+ * revela si el RUT existe ni el correo (anti-enumeración). Si el RUT existe y
+ * no hay un código reciente, envía uno al correo registrado del cliente.
  */
 async function solicitarCodigo(rutRaw) {
   const rut = normalizeRut(rutRaw);
   if (rut.length < 8) return { ok: false, error: 'RUT inválido' };
 
   const email = emailDeCliente(rut);
-  // Respuesta uniforme: siempre "ok". Solo enviamos si hay email real.
   if (email) {
-    const codigo = generarCodigo(6);
-    pendientes.set(rut, {
-      codigo,
-      exp: Date.now() + config.otpTtlMin * 60 * 1000,
-      email,
-      intentos: 0,
-    });
-    // En pruebas, redirige el código a OTP_TEST_EMAIL (no molesta al cliente real).
-    const destino = config.otpTestEmail || email;
-    try {
-      await mailer.enviarCodigo(destino, codigo);
-    } catch (e) {
-      console.error('[auth] envío código', e.message);
+    const prev = pendientes.get(rut);
+    // Cooldown: no reenvía si ya se emitió un código hace menos de 60s
+    // (evita bombardeo de correo a un cliente).
+    if (!prev || Date.now() - prev.issuedAt > RESEND_COOLDOWN_MS) {
+      const codigo = generarCodigo(6);
+      pendientes.set(rut, {
+        codigo,
+        exp: Date.now() + config.otpTtlMin * 60 * 1000,
+        issuedAt: Date.now(),
+        email,
+        intentos: 0,
+      });
+      const destino = config.otpTestEmail || email;
+      try {
+        await mailer.enviarCodigo(destino, codigo);
+      } catch (e) {
+        console.error('[auth] envío código', e.message);
+      }
     }
   }
-  return { ok: true, emailMask: maskEmail(email) };
+  return { ok: true };
 }
 
 /**

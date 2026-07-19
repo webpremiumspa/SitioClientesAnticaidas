@@ -141,10 +141,13 @@ async function descargarDoc(docId) {
   const decoded = Buffer.from(docId, 'base64url').toString('utf8');
   const [did, itemId] = decoded.split('|');
   if (!did || !itemId) throw new Error('docId inválido');
+  // Encodea los ids para que no se pueda manipular la ruta de la API de Graph.
+  const d = encodeURIComponent(did);
+  const it = encodeURIComponent(itemId);
   const sid = await getSiteId();
   // Metadatos (nombre) + contenido.
-  const meta = await gjson(`/sites/${sid}/drives/${did}/items/${itemId}?$select=name,size,file`);
-  const res = await gfetch(`/sites/${sid}/drives/${did}/items/${itemId}/content`);
+  const meta = await gjson(`/sites/${sid}/drives/${d}/items/${it}?$select=name,size,file`);
+  const res = await gfetch(`/sites/${sid}/drives/${d}/items/${it}/content`);
   if (!res.ok && res.status !== 302) {
     throw new Error(`Graph content HTTP ${res.status}`);
   }
