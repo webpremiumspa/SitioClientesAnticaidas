@@ -1,10 +1,11 @@
 ---
 deployment:
   tasks:
-    # Publica el FRONTEND (contenido de public/) en la RAÍZ del docroot del
-    # subdominio, para que Apache lo sirva en "/" (css, vendor, assets, js).
-    # El backend Node corre aparte por Passenger desde su Application Root y
-    # atiende sólo las rutas /api (las que no son archivos estáticos).
+    # El Application Root de la app ES el docroot del subdominio, así que aquí
+    # van tanto el backend (Passenger corre app.js) como el frontend estático.
     - export DEPLOYPATH=/home/somitalc/clientes.anticaidas.cl
     - /bin/mkdir -p "$DEPLOYPATH"
+    # Backend (código + dependencias)
+    - /bin/cp -R portal-clientes/app.js portal-clientes/package.json portal-clientes/package-lock.json portal-clientes/src portal-clientes/scripts portal-clientes/node_modules "$DEPLOYPATH/"
+    # Frontend estático en la RAÍZ del docroot (Apache lo sirve en "/")
     - /bin/cp -R portal-clientes/public/. "$DEPLOYPATH/"
