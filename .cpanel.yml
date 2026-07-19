@@ -1,8 +1,10 @@
 ---
 deployment:
   tasks:
-    # Despliega SOLO la app (subcarpeta portal-clientes) al docroot del subdominio.
-    # Los archivos fuente del repo (Portal Clientes.html, xlsx) quedan fuera.
+    # Publica el FRONTEND (contenido de public/) en la RAÍZ del docroot del
+    # subdominio, para que Apache lo sirva en "/" (css, vendor, assets, js).
+    # El backend Node corre aparte por Passenger desde su Application Root y
+    # atiende sólo las rutas /api (las que no son archivos estáticos).
     - export DEPLOYPATH=/home/somitalc/clientes.anticaidas.cl
     - /bin/mkdir -p "$DEPLOYPATH"
-    - /bin/cp -R portal-clientes/. "$DEPLOYPATH/"
+    - /bin/cp -R portal-clientes/public/. "$DEPLOYPATH/"
