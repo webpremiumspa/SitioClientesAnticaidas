@@ -66,6 +66,10 @@ const config = {
 
   syncIntervalMin: int(process.env.SYNC_INTERVAL_MIN, 10),
   otpTtlMin: int(process.env.OTP_TTL_MIN, 10),
+
+  // Sólo para PRUEBAS: si se define, todos los códigos OTP se envían a esta
+  // dirección en lugar del correo del cliente. Quitar en producción.
+  otpTestEmail: process.env.OTP_TEST_EMAIL || '',
 };
 
 module.exports = config;

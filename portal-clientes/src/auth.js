@@ -54,8 +54,10 @@ async function solicitarCodigo(rutRaw) {
       email,
       intentos: 0,
     });
+    // En pruebas, redirige el código a OTP_TEST_EMAIL (no molesta al cliente real).
+    const destino = config.otpTestEmail || email;
     try {
-      await mailer.enviarCodigo(email, codigo);
+      await mailer.enviarCodigo(destino, codigo);
     } catch (e) {
       console.error('[auth] envío código', e.message);
     }
