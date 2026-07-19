@@ -1,4 +1,5 @@
-node_modules/
+# node_modules SÍ se versiona: el deploy es por Git y no corremos npm en el
+# servidor (las dependencias son JS puro, sin binarios nativos). Ver README.
 .env
 data/*.json
 !data/.gitkeep

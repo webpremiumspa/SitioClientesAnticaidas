@@ -39,27 +39,35 @@ npm start                 # http://localhost:3000
 En **modo demo** (sin credenciales) usa datos de ejemplo (Inacap). El código OTP
 no se envía por correo: se imprime en consola. RUT de prueba: `60.711.000-K`.
 
-## Despliegue en cPanel
+## Despliegue en cPanel (por Git)
 
-> **El `npm install` se hace en LOCAL** y se sube `node_modules` ya construido.
-> Todas las dependencias son JavaScript puro (sin módulos nativos que compilen
-> por plataforma), así que lo construido en Windows corre igual en el cPanel
-> (Linux). **No** hace falta el botón *NPM Install* de cPanel.
+> **El `npm install` se hace en LOCAL** y `node_modules` se **versiona en git**
+> (dependencias JS puro, sin binarios nativos → lo construido en Windows corre
+> en el cPanel Linux). Así el deploy por Git es autocontenido: **no** se corre
+> npm en el servidor.
 
-1. **En local**: `npm install` (genera `node_modules/`).
-2. **Dominios** (cPanel) → crear el subdominio `clientes.anticaidas.cl` (y el
-   dominio `anticaidas.cl` si aún no está en la cuenta).
-3. **Subir** todo el proyecto (incluido `node_modules/`, **sin** `.env`) a la
-   carpeta destino. No subir `data/portal.json` (se regenera solo).
-4. **Setup Node.js App** → Crear aplicación:
+El repo usa `.cpanel.yml` (en la raíz) que copia la subcarpeta `portal-clientes/`
+al docroot del subdominio: `/home/somitalc/clientes.anticaidas.cl`.
+
+1. **En local**: `npm install` (una vez, y cada vez que cambien dependencias).
+2. **Commit + push** incluyendo `node_modules/`:
+   `git add . && git commit -m "deploy" && git push origin main`
+3. **Dominios** (cPanel) → subdominio `clientes.anticaidas.cl` creado.
+4. **Git Version Control** → *Update from Remote* → *Deploy HEAD Commit*
+   (ejecuta `.cpanel.yml` y copia la app al docroot).
+5. **Setup Node.js App**:
    - Versión Node.js: **24.16.0**
-   - Modo: **Production**
-   - Raíz de aplicación: la carpeta donde subiste el proyecto
+   - Modo: **Development** en pruebas / **Production** al publicar
+   - **Raíz de aplicación**: `/home/somitalc/clientes.anticaidas.cl`
+     (¡la misma ruta destino del `.cpanel.yml`!)
    - URL: `clientes.anticaidas.cl`
    - Archivo de inicio: **app.js**
-5. **Environment variables**: cargar todas las de `.env.example` con los valores
-   reales. Poner `DEMO_MODE=false` y un `SESSION_SECRET` largo y aleatorio.
-6. **Restart** la aplicación desde el panel. (No es necesario correr NPM Install.)
+6. **Environment variables**: cargar las de `.env.example` con valores reales.
+   `DEMO_MODE=false`, `SESSION_SECRET` largo y aleatorio. (`.env` NO se sube; en
+   cPanel las variables se definen en el panel.)
+7. **Restart**. Verificar en `https://clientes.anticaidas.cl/api/health`.
+
+Deploys posteriores: push → *Update from Remote* → *Deploy HEAD Commit* → *Restart*.
 
 ## Variables de entorno
 
