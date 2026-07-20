@@ -75,6 +75,18 @@ Ver `.env.example`. Grupos: AppSheet (App ID + Access Key de la app read-only),
 Azure/Graph (`Sites.Selected`), SMTP (envío del código), ejecutivo (fijo por
 config), sync y `DEMO_MODE`.
 
+## Frontend (build)
+
+El frontend NO usa Babel-in-browser. El JSX de `public/js/*.js` se precompila
+a `public/app.bundle.js` (que es lo que carga `index.html`), lo que permite un
+CSP estricto (sin `unsafe-eval`) y mejora el rendimiento.
+
+**Cada vez que edites un archivo `public/js/*.js`, recompila:**
+```bash
+npm run build   # = node scripts/build-frontend.js
+```
+Luego commit + deploy + **purga Cloudflare** (cachea el JS/HTML).
+
 ## Estructura
 
 ```

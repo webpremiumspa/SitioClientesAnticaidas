@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "node --watch app.js",
+    "build": "node scripts/build-frontend.js",
     "sync": "node scripts/sync-once.js"
   },
   "engines": {

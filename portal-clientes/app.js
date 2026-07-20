@@ -31,11 +31,11 @@ app.use((req, res, next) => {
     'Content-Security-Policy',
     [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval'", // Babel compila JSX en el navegador (eval)
+      "script-src 'self' https://static.cloudflareinsights.com", // frontend precompilado + beacon CF
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       "img-src 'self' data:",
-      "connect-src 'self'",
+      "connect-src 'self' https://cloudflareinsights.com",
       "frame-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
