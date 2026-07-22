@@ -850,7 +850,7 @@ function ProjectDetail({
   onOpenModal
 }) {
   const counts = {};
-  data.carpetas.forEach(c => {
+  project.carpetas.forEach(c => {
     counts[c.key] = (project.docs[c.key] || []).length;
   });
   return /*#__PURE__*/React.createElement("div", {
@@ -1048,7 +1048,7 @@ function ProjectDetail({
     className: "sub"
   }, "Selecciona una carpeta para visualizar o descargar archivos.")), /*#__PURE__*/React.createElement("div", {
     className: "folders"
-  }, data.carpetas.map(c => {
+  }, project.carpetas.map(c => {
     const n = counts[c.key];
     const cls = 'folder cat-' + c.cat + (n === 0 ? ' empty' : '');
     return /*#__PURE__*/React.createElement("button", {
@@ -1077,8 +1077,8 @@ function FolderView({
   folderKey,
   onBack
 }) {
-  const folder = data.carpetas.find(c => c.key === folderKey);
-  const docs = project.docs[folderKey];
+  const folder = project.carpetas.find(c => c.key === folderKey);
+  const docs = project.docs[folderKey] || [];
   const [active, setActive] = useState(docs[0] || null);
   const [downloaded, setDownloaded] = useState({});
   useEffect(() => {
@@ -1630,7 +1630,7 @@ function Topbar({
     className: "sep"
   }, "/"), /*#__PURE__*/React.createElement("span", {
     className: "current"
-  }, data.carpetas.find(c => c.key === selectedFolder)?.label)) : /*#__PURE__*/React.createElement("span", {
+  }, selectedProject.carpetas.find(c => c.key === selectedFolder)?.label)) : /*#__PURE__*/React.createElement("span", {
     className: "current"
   }, selectedProject.nombre))), /*#__PURE__*/React.createElement("div", {
     className: "user"

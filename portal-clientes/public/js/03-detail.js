@@ -44,7 +44,7 @@ function folderIcon(cat) {
 
 function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
   const counts = {};
-  data.carpetas.forEach((c) => { counts[c.key] = (project.docs[c.key] || []).length; });
+  project.carpetas.forEach((c) => { counts[c.key] = (project.docs[c.key] || []).length; });
 
   return (
     <div className="detail" data-screen-label={`03 Detalle ${project.codigo}`}>
@@ -158,7 +158,7 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
       </div>
 
       <div className="folders">
-        {data.carpetas.map(c => {
+        {project.carpetas.map(c => {
           const n = counts[c.key];
           const cls = 'folder cat-' + c.cat + (n === 0 ? ' empty' : '');
           return (
@@ -189,8 +189,8 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
    FOLDER VIEW (doc list + PDF viewer)
    =========================================================== */
 function FolderView({ data, project, folderKey, onBack }) {
-  const folder = data.carpetas.find(c => c.key === folderKey);
-  const docs = project.docs[folderKey];
+  const folder = project.carpetas.find(c => c.key === folderKey);
+  const docs = project.docs[folderKey] || [];
   const [active, setActive] = useState(docs[0] || null);
   const [downloaded, setDownloaded] = useState({});
 

@@ -38,8 +38,18 @@ function docsPublicos(p, keys) {
   return out;
 }
 
-function proyectoPublico(p, keys) {
-  return {
+/** Carpetas propias del proyecto (solo las que ese proyecto tiene), ordenadas. */
+function carpetasDeProyecto(p, meta) {
+  return Object.keys(p.docs || {})
+    .map((k) => meta[k] || { key: k, label: k, cat: 'gen', desc: '', order: 100 })
+    .sort((a, b) => (a.order - b.order) || a.label.localeCompare(b.label))
+    .map((c) => ({ key: c.key, label: c.label, cat: c.cat, desc: c.desc }));
+}
+
+function proyectoPublico(p, meta, hoy) {
+  const carpetas = carpetasDeProyecto(p, meta);
+  const docs = docsPublicos(p, carpetas.map((c) => c.key));
+  const pub = {
     id: p.id,
     codigo: p.codigo,
     nombre: p.nombre,
@@ -62,8 +72,16 @@ function proyectoPublico(p, keys) {
     progreso: p.progreso,
     proximoHito: p.proximoHito,
     descripcion: p.descripcion,
-    docs: docsPublicos(p, keys),
+    carpetas, // categorías propias de ESTE proyecto
+    docs,
   };
+  // Chip de vigencia: sólo si el proyecto tiene certificados (categoría 'ci').
+  const certCat = carpetas.find((c) => c.cat === 'ci');
+  const certDocs = certCat ? docs[certCat.key] || [] : [];
+  if (certDocs.length && p.proxMantencionISO) {
+    pub.certVigencia = p.proxMantencionISO >= hoy ? 'vigente' : 'vencido';
+  }
+  return pub;
 }
 
 /** Devuelve el PORTAL_DATA para un RUT, o null si no tiene proyectos. */
@@ -71,31 +89,8 @@ function portalData(rutNorm) {
   const proyectos = store.getProyectosPorRut(rutNorm).filter((p) => p.estado !== 'cancelado');
   if (!proyectos.length) return null;
 
-  // Categorías = unión de las carpetas presentes en los proyectos del cliente.
   const meta = store.getCarpetasMeta();
-  const keysPresentes = new Set();
-  for (const p of proyectos) for (const k of Object.keys(p.docs || {})) keysPresentes.add(k);
-
-  const carpetas = [...keysPresentes]
-    .map((k) => meta[k] || { key: k, label: k, cat: 'gen', desc: '', order: 100 })
-    .sort((a, b) => (a.order - b.order) || a.label.localeCompare(b.label))
-    .map((c) => ({ key: c.key, label: c.label, cat: c.cat, desc: c.desc }));
-
-  const keys = carpetas.map((c) => c.key);
-  // Categoría de certificados (la que la config marca como 'ci').
-  const certCat = carpetas.find((c) => c.cat === 'ci');
   const hoy = hoyISO();
-
-  const proyectosPub = proyectos.map((p) => {
-    const pub = proyectoPublico(p, keys);
-    // Chip de vigencia: sólo si el proyecto tiene certificados.
-    const certDocs = certCat ? pub.docs[certCat.key] || [] : [];
-    if (certDocs.length && p.proxMantencionISO) {
-      pub.certVigencia = p.proxMantencionISO >= hoy ? 'vigente' : 'vencido';
-    }
-    return pub;
-  });
-
   const cli = proyectos[0].cliente;
   return {
     cliente: {
@@ -109,8 +104,7 @@ function portalData(rutNorm) {
       telefono: cli.telefono,
     },
     ejecutivo: ejecutivo(),
-    proyectos: proyectosPub,
-    carpetas,
+    proyectos: proyectos.map((p) => proyectoPublico(p, meta, hoy)),
   };
 }
 

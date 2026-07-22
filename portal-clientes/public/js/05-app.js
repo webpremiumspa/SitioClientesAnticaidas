@@ -20,7 +20,7 @@ function Topbar({ data, view, selectedProject, selectedFolder, onNav, onLogout }
                 </button>
                 <span className="sep">/</span>
                 <span className="current">
-                  {data.carpetas.find(c => c.key === selectedFolder)?.label}
+                  {selectedProject.carpetas.find(c => c.key === selectedFolder)?.label}
                 </span>
               </>
             ) : (
