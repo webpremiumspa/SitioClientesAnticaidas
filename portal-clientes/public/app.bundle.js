@@ -572,10 +572,6 @@ function ProjectCard({
     className: "proj-meta"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     className: "l"
-  }, "Tipo"), /*#__PURE__*/React.createElement("span", {
-    className: "v"
-  }, p.tipoSistema)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    className: "l"
   }, "Extensi\xF3n"), /*#__PURE__*/React.createElement("span", {
     className: "v"
   }, p.extension)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {

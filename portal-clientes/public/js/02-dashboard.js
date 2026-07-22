@@ -36,10 +36,6 @@ function ProjectCard({ p, onOpen }) {
 
         <div className="proj-meta">
           <div>
-            <span className="l">Tipo</span>
-            <span className="v">{p.tipoSistema}</span>
-          </div>
-          <div>
             <span className="l">Extensión</span>
             <span className="v">{p.extension}</span>
           </div>
