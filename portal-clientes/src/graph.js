@@ -101,24 +101,26 @@ function encodePath(p) {
 }
 
 /**
- * Lista los certificados (PDF) de un proyecto.
- * @param {string} carpetaProyecto  carpeta del proyecto dentro de la biblioteca
- *   "Clientes", ej. "ACB5925 CENTRAL COLMITO SA" (derivada de URL_Comercial).
+ * Lista los PDF de una CATEGORÍA de un proyecto.
+ * @param {string} carpetaProyecto  carpeta del proyecto dentro de "Clientes",
+ *   ej. "ACB5925 CENTRAL COLMITO SA" (derivada de URL_Comercial).
+ * @param {string} categoriaFolder  subcarpeta bajo "DOSSIER DE ENTREGA",
+ *   ej. "CERTIFICADOS DE INSTALACION".
  * @returns {Promise<Array>} docs [{ name, size, date, tag, docId }]
  */
-async function listarCertificados(carpetaProyecto) {
-  if (!carpetaProyecto) return [];
+async function listarDocs(carpetaProyecto, categoriaFolder) {
+  if (!carpetaProyecto || !categoriaFolder) return [];
   const sid = await getSiteId();
   const did = await getDriveId();
   // La biblioteca ya ES "Clientes"; la ruta interna arranca en la carpeta del proyecto.
-  const rel = `${carpetaProyecto}/DOSSIER DE ENTREGA/${config.graph.categoriaCertificados}`;
+  const rel = `${carpetaProyecto}/DOSSIER DE ENTREGA/${categoriaFolder}`;
   const path = `/sites/${sid}/drives/${did}/root:/${encodePath(rel)}:/children?$top=200&$select=id,name,size,lastModifiedDateTime,file`;
 
   let json;
   try {
     json = await gjson(path);
   } catch (e) {
-    // Carpeta inexistente (cliente sin certificados) -> lista vacía, no error.
+    // Carpeta inexistente (proyecto sin esa categoría) -> lista vacía, no error.
     if (String(e.message).includes('HTTP 404')) return [];
     throw e;
   }
@@ -168,4 +170,4 @@ function formatDate(iso) {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-module.exports = { listarCertificados, descargarDoc };
+module.exports = { listarDocs, descargarDoc };

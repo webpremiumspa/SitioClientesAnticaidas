@@ -34,24 +34,44 @@ async function syncReal() {
   const statusMap = buildStatusMap(statusRows);
   const proyectos = mapProyectos(proyectosRows, registroRows, statusMap);
 
-  // 2) Certificados por cliente (una vez por carpeta de cliente, no por proyecto).
-  const cacheCerts = new Map();
+  // 2) Documentos por proyecto y categoría (SharePoint via Graph).
+  //    Se paraleliza con límite de concurrencia para no golpear a Graph y no
+  //    volver lento el sync (proyectos × categorías = muchas llamadas).
+  const cats = config.categorias;
   for (const p of proyectos) {
-    const folder = p.clienteFolder;
-    if (!folder) continue;
-    if (!cacheCerts.has(folder)) {
-      try {
-        cacheCerts.set(folder, await graph.listarCertificados(folder));
-      } catch (e) {
-        console.error('[sync] certificados', folder, e.message);
-        cacheCerts.set(folder, []);
-      }
-    }
-    p.docs = { certificados: cacheCerts.get(folder) };
+    p.docs = {};
+    for (const c of cats) p.docs[c.key] = [];
   }
+  const tareas = [];
+  for (const p of proyectos) {
+    if (!p.clienteFolder) continue;
+    for (const c of cats) tareas.push({ p, c });
+  }
+  let fallos = 0;
+  await mapLimit(tareas, 8, async ({ p, c }) => {
+    try {
+      p.docs[c.key] = await graph.listarDocs(p.clienteFolder, c.folder);
+    } catch (e) {
+      fallos++;
+      p.docs[c.key] = [];
+    }
+  });
+  if (fallos) console.warn(`[sync] ${fallos}/${tareas.length} listados de docs fallaron`);
 
   store.saveProyectos(proyectos);
   return { source: 'appsheet', total: proyectos.length };
+}
+
+/** Ejecuta fn sobre items con un máximo de `limit` en paralelo. */
+async function mapLimit(items, limit, fn) {
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length || 1) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      await fn(items[idx], idx);
+    }
+  });
+  await Promise.all(workers);
 }
 
 async function runSync() {

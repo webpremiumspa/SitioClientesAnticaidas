@@ -51,9 +51,30 @@ const config = {
     hostname: process.env.SHAREPOINT_HOSTNAME || 'somitalspa.sharepoint.com',
     sitePath: process.env.SHAREPOINT_SITE_PATH || '/sites/SitioclientesAnticadas',
     drive: process.env.SHAREPOINT_DRIVE || 'Clientes',
-    categoriaCertificados:
-      process.env.SHAREPOINT_CATEGORIA_CERTIFICADOS || 'CERTIFICADOS DE INSTALACION',
   },
+
+  // Categorías de documentos = subcarpetas bajo "DOSSIER DE ENTREGA".
+  //   key   -> clave que consume el frontend
+  //   folder-> nombre EXACTO de la subcarpeta en SharePoint
+  //   cat   -> código de ícono/color en el frontend (cg/ci/ft/rd)
+  categorias: [
+    { key: 'calculos-garantias', cat: 'cg',
+      folder: process.env.SP_CAT_CALCULOS || 'CALCULOS Y GARANTIAS',
+      label: 'Cálculos y Garantías',
+      desc: 'Memorias de cálculo, simulaciones y garantías por corrosión.' },
+    { key: 'certificados', cat: 'ci',
+      folder: process.env.SP_CAT_CERTIFICADOS || 'CERTIFICADOS DE INSTALACION',
+      label: 'Certificados de Instalación',
+      desc: 'Certificado oficial firmado por la jefatura de operaciones.' },
+    { key: 'fichas-tecnicas', cat: 'ft',
+      folder: process.env.SP_CAT_FICHAS || 'FICHAS TECNICAS Y MANUALES',
+      label: 'Fichas Técnicas',
+      desc: 'Fichas y manuales de los componentes instalados.' },
+    { key: 'registros', cat: 'rd',
+      folder: process.env.SP_CAT_REGISTROS || 'REGISTROS DE ENTREGA',
+      label: 'Registros de Entrega',
+      desc: 'Acta de recepción firmada por instalador y cliente.' },
+  ],
 
   smtp: {
     host: process.env.SMTP_HOST || '',

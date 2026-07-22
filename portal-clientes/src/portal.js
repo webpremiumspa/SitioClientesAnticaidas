@@ -10,15 +10,13 @@ const config = require('./config');
 const store = require('./store');
 const { iniciales } = require('./util');
 
-// v1: solo la carpeta de Certificados de Instalación. Las otras 3 ocultas.
-const CARPETAS = [
-  {
-    key: 'certificados',
-    label: 'Certificados de Instalación',
-    cat: 'ci',
-    desc: 'Certificado oficial firmado por la jefatura de operaciones.',
-  },
-];
+// Las 4 categorías de documentos (desde config).
+const CARPETAS = config.categorias.map((c) => ({
+  key: c.key,
+  label: c.label,
+  cat: c.cat,
+  desc: c.desc,
+}));
 
 function ejecutivo() {
   return {
@@ -56,22 +54,24 @@ function proyectoPublico(p) {
     progreso: p.progreso,
     proximoHito: p.proximoHito,
     descripcion: p.descripcion,
-    docs: {
-      // v1: solo se pueblan los certificados. Las otras 3 categorías se envían
-      // vacías para que la aritmética del frontend (conteos) no se rompa; no se
-      // listan en `carpetas`, así que sus carpetas no se dibujan.
-      'calculos-garantias': [],
-      certificados: (p.docs && p.docs.certificados ? p.docs.certificados : []).map((d) => ({
-        name: d.name,
-        size: d.size,
-        date: d.date,
-        tag: d.tag,
-        path: d.docId ? `/api/doc/${encodeURIComponent(d.docId)}` : null,
-      })),
-      'fichas-tecnicas': [],
-      registros: [],
-    },
+    docs: docsPublicos(p),
   };
+}
+
+/** Mapea las 4 categorías de documentos a la forma pública (con URL de proxy). */
+function docsPublicos(p) {
+  const out = {};
+  for (const c of config.categorias) {
+    const lista = (p.docs && p.docs[c.key]) || [];
+    out[c.key] = lista.map((d) => ({
+      name: d.name,
+      size: d.size,
+      date: d.date,
+      tag: d.tag,
+      path: d.docId ? `/api/doc/${encodeURIComponent(d.docId)}` : null,
+    }));
+  }
+  return out;
 }
 
 /** Devuelve el PORTAL_DATA para un RUT, o null si no tiene proyectos. */
@@ -106,8 +106,10 @@ function docIdsValidos(rutNorm) {
   const set = new Set();
   for (const p of store.getProyectosPorRut(rutNorm)) {
     if (p.estado === 'cancelado') continue;
-    for (const d of (p.docs && p.docs.certificados) || []) {
-      if (d.docId) set.add(d.docId);
+    for (const c of config.categorias) {
+      for (const d of (p.docs && p.docs[c.key]) || []) {
+        if (d.docId) set.add(d.docId);
+      }
     }
   }
   return set;

@@ -78,14 +78,18 @@ function proyectos() {
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-01841 - 01841' }],
       docs: {
+        'calculos-garantias': [
+          { name: 'SafetyCentre_Calculation_AFF4262-01841.pdf', size: '1.4 MB', date: '03-11-2025', tag: 'VIGENTE', docId: 'demo-calc-01841' },
+          { name: 'Warranty_Corrosion_10yrs.pdf', size: '380 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-war-01841' },
+        ],
         certificados: [
-          {
-            name: 'CERT_INSTALACION_AFF4262-01841.pdf',
-            size: '290 KB',
-            date: '03-11-2025',
-            tag: 'VIGENTE',
-            docId: 'demo-cert-01841',
-          },
+          { name: 'CERT_INSTALACION_AFF4262-01841.pdf', size: '290 KB', date: '03-11-2025', tag: 'VIGENTE', docId: 'demo-cert-01841' },
+        ],
+        'fichas-tecnicas': [
+          { name: 'FrogLine_Data_Sheet.pdf', size: '780 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-ficha-01841' },
+        ],
+        registros: [
+          { name: 'REG_INSTALADOR_AFF4262-01841.pdf', size: '210 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-reg-01841' },
         ],
       },
     },
