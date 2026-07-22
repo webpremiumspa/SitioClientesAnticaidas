@@ -261,6 +261,43 @@ function Logo({
   });
 }
 
+/* ---------- Chip de vigencia de certificados ----------
+   Estilos inline para que no dependan del CSS (robusto a caché). */
+function CertChip({
+  vigencia,
+  style
+}) {
+  if (!vigencia) return null;
+  const c = vigencia === 'vigente' ? {
+    background: '#e2efe6',
+    color: '#1f7a44'
+  } : {
+    background: '#fbe3e3',
+    color: '#b3261e'
+  };
+  return /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 6,
+      fontSize: 11,
+      fontWeight: 600,
+      padding: '4px 10px',
+      borderRadius: 999,
+      whiteSpace: 'nowrap',
+      ...c,
+      ...(style || {})
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 6,
+      height: 6,
+      borderRadius: '50%',
+      background: 'currentColor'
+    }
+  }), vigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos');
+}
+
 /* ===========================================================
    LOGIN
    =========================================================== */
@@ -531,7 +568,7 @@ function ProjectCard({
     className: "code"
   }, p.codigo)), /*#__PURE__*/React.createElement("h3", null, p.nombre), /*#__PURE__*/React.createElement("div", {
     className: "addr"
-  }, p.sub, " \xB7 ", p.direccion), /*#__PURE__*/React.createElement("div", {
+  }, p.sub), /*#__PURE__*/React.createElement("div", {
     className: "proj-meta"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     className: "l"
@@ -563,11 +600,9 @@ function ProjectCard({
       gap: 8,
       justifyContent: 'flex-end'
     }
-  }, p.certVigencia && /*#__PURE__*/React.createElement("span", {
-    className: 'cert-chip ' + p.certVigencia
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "dot"
-  }), p.certVigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'), /*#__PURE__*/React.createElement("span", {
+  }, /*#__PURE__*/React.createElement(CertChip, {
+    vigencia: p.certVigencia
+  }), /*#__PURE__*/React.createElement("span", {
     className: "docs-count"
   }, totalDocs, " documentos")), /*#__PURE__*/React.createElement("span", {
     className: "open"
@@ -1064,7 +1099,13 @@ function ProjectDetail({
       className: "count"
     }, n), /*#__PURE__*/React.createElement("h3", null, c.label), /*#__PURE__*/React.createElement("div", {
       className: "label"
-    }, n === 0 ? 'Sin documentos por el momento.' : n === 1 ? '1 documento disponible' : n + ' documentos disponibles'));
+    }, n === 0 ? 'Sin documentos por el momento.' : n === 1 ? '1 documento disponible' : n + ' documentos disponibles'), c.cat === 'ci' && project.certVigencia && /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8
+      }
+    }, /*#__PURE__*/React.createElement(CertChip, {
+      vigencia: project.certVigencia
+    })));
   })));
 }
 
@@ -1105,14 +1146,13 @@ function FolderView({
     className: "icon-wrap"
   }, folderIcon(folder.cat)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "t-eye"
-  }, project.codigo, " \xB7 ", project.nombre.split('—')[1]?.trim() || project.comuna), /*#__PURE__*/React.createElement("h2", null, folder.label), /*#__PURE__*/React.createElement("p", null, folder.desc), folder.cat === 'ci' && project.certVigencia && /*#__PURE__*/React.createElement("span", {
-    className: 'cert-chip ' + project.certVigencia,
+  }, project.codigo, " \xB7 ", project.nombre.split('—')[1]?.trim() || project.comuna), /*#__PURE__*/React.createElement("h2", null, folder.label), /*#__PURE__*/React.createElement("p", null, folder.desc), folder.cat === 'ci' && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 8
     }
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "dot"
-  }), project.certVigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'))), docs.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(CertChip, {
+    vigencia: project.certVigencia
+  })))), docs.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty-state"
   }, /*#__PURE__*/React.createElement("div", {
     className: "ic"

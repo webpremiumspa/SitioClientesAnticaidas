@@ -32,7 +32,7 @@ function ProjectCard({ p, onOpen }) {
           <span className="code">{p.codigo}</span>
         </div>
         <h3>{p.nombre}</h3>
-        <div className="addr">{p.sub} · {p.direccion}</div>
+        <div className="addr">{p.sub}</div>
 
         <div className="proj-meta">
           <div>
@@ -62,12 +62,7 @@ function ProjectCard({ p, onOpen }) {
 
       <div className="proj-side">
         <div className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
-          {p.certVigencia && (
-            <span className={'cert-chip ' + p.certVigencia}>
-              <span className="dot"></span>
-              {p.certVigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'}
-            </span>
-          )}
+          <CertChip vigencia={p.certVigencia} />
           <span className="docs-count">{totalDocs} documentos</span>
         </div>
         <span className="open">

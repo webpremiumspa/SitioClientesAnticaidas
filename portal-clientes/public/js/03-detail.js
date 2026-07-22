@@ -177,6 +177,9 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
                  n === 1 ? '1 documento disponible' :
                  n + ' documentos disponibles'}
               </div>
+              {c.cat === 'ci' && project.certVigencia && (
+                <div style={{ marginTop: 8 }}><CertChip vigencia={project.certVigencia} /></div>
+              )}
             </button>
           );
         })}
@@ -210,11 +213,8 @@ function FolderView({ data, project, folderKey, onBack }) {
             <div className="t-eye">{project.codigo} · {project.nombre.split('—')[1]?.trim() || project.comuna}</div>
             <h2>{folder.label}</h2>
             <p>{folder.desc}</p>
-            {folder.cat === 'ci' && project.certVigencia && (
-              <span className={'cert-chip ' + project.certVigencia} style={{ marginTop: 8 }}>
-                <span className="dot"></span>
-                {project.certVigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'}
-              </span>
+            {folder.cat === 'ci' && (
+              <div style={{ marginTop: 8 }}><CertChip vigencia={project.certVigencia} /></div>
             )}
           </div>
         </div>

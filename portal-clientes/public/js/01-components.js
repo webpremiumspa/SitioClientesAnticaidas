@@ -127,6 +127,25 @@ function Logo({ height = 32 }) {
   return <img src={src} style={{ height, width: 'auto', display: 'block' }} alt="Anticaidas" />;
 }
 
+/* ---------- Chip de vigencia de certificados ----------
+   Estilos inline para que no dependan del CSS (robusto a caché). */
+function CertChip({ vigencia, style }) {
+  if (!vigencia) return null;
+  const c = vigencia === 'vigente'
+    ? { background: '#e2efe6', color: '#1f7a44' }
+    : { background: '#fbe3e3', color: '#b3261e' };
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      fontSize: 11, fontWeight: 600, padding: '4px 10px', borderRadius: 999,
+      whiteSpace: 'nowrap', ...c, ...(style || {}),
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'currentColor' }}></span>
+      {vigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'}
+    </span>
+  );
+}
+
 /* ===========================================================
    LOGIN
    =========================================================== */
