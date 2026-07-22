@@ -48,12 +48,19 @@ async function getToken() {
   return tokenCache.value;
 }
 
-async function gfetch(path, opts = {}) {
+async function gfetch(path, opts = {}, intento = 0) {
   const token = await getToken();
   const res = await fetch(path.startsWith('http') ? path : GRAPH + path, {
     ...opts,
     headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) },
   });
+  // Reintenta ante throttling / errores transitorios (respeta Retry-After).
+  if ([429, 502, 503, 504].includes(res.status) && intento < 4) {
+    const ra = parseInt(res.headers.get('retry-after') || '', 10);
+    const wait = Number.isFinite(ra) ? ra * 1000 : Math.min(500 * 2 ** intento, 8000);
+    await new Promise((r) => setTimeout(r, wait));
+    return gfetch(path, opts, intento + 1);
+  }
   return res;
 }
 
@@ -100,30 +107,17 @@ function encodePath(p) {
   return p.split('/').map(encodeURIComponent).join('/');
 }
 
-/**
- * Lista los PDF de una CATEGORÍA de un proyecto.
- * @param {string} carpetaProyecto  carpeta del proyecto dentro de "Clientes",
- *   ej. "ACB5925 CENTRAL COLMITO SA" (derivada de URL_Comercial).
- * @param {string} categoriaFolder  subcarpeta bajo "DOSSIER DE ENTREGA",
- *   ej. "CERTIFICADOS DE INSTALACION".
- * @returns {Promise<Array>} docs [{ name, size, date, tag, docId }]
- */
-async function listarDocs(carpetaProyecto, categoriaFolder) {
-  if (!carpetaProyecto || !categoriaFolder) return [];
-  const sid = await getSiteId();
-  const did = await getDriveId();
-  // La biblioteca ya ES "Clientes"; la ruta interna arranca en la carpeta del proyecto.
-  const rel = `${carpetaProyecto}/DOSSIER DE ENTREGA/${categoriaFolder}`;
-  const path = `/sites/${sid}/drives/${did}/root:/${encodePath(rel)}:/children?$top=200&$select=id,name,size,lastModifiedDateTime,file`;
+/** Normaliza un nombre para comparar sin acentos, mayúsculas ni espacios extra. */
+function norm(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // quita acentos (marcas diacríticas)
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
-  let json;
-  try {
-    json = await gjson(path);
-  } catch (e) {
-    // Carpeta inexistente (proyecto sin esa categoría) -> lista vacía, no error.
-    if (String(e.message).includes('HTTP 404')) return [];
-    throw e;
-  }
+function mapArchivos(json, did) {
   return (json.value || [])
     .filter((it) => it.file && /\.pdf$/i.test(it.name))
     .map((it) => ({
@@ -133,6 +127,51 @@ async function listarDocs(carpetaProyecto, categoriaFolder) {
       tag: 'VIGENTE',
       docId: Buffer.from(`${did}|${it.id}`).toString('base64url'),
     }));
+}
+
+/**
+ * Lista los documentos de TODAS las categorías de un proyecto, matcheando las
+ * subcarpetas reales de "DOSSIER DE ENTREGA" contra config.categorias de forma
+ * tolerante (sin acentos/mayúsculas/espacios). Devuelve { [catKey]: docs[] }.
+ * @param {string} carpetaProyecto  ej. "ACB5925 CENTRAL COLMITO SA"
+ * @param {Array} categorias        config.categorias
+ */
+async function listarDocsProyecto(carpetaProyecto, categorias) {
+  const out = {};
+  for (const c of categorias) out[c.key] = [];
+  if (!carpetaProyecto) return out;
+
+  const sid = await getSiteId();
+  const did = await getDriveId();
+  const relDossier = `${carpetaProyecto}/DOSSIER DE ENTREGA`;
+  const pathDossier = `/sites/${sid}/drives/${did}/root:/${encodePath(relDossier)}:/children?$top=200&$select=id,name,folder`;
+
+  let dossier;
+  try {
+    dossier = await gjson(pathDossier);
+  } catch (e) {
+    if (String(e.message).includes('HTTP 404')) return out; // proyecto sin DOSSIER
+    throw e;
+  }
+
+  // Índice de subcarpetas reales por nombre normalizado.
+  const subcarpetas = {};
+  for (const it of dossier.value || []) {
+    if (it.folder) subcarpetas[norm(it.name)] = it.id;
+  }
+
+  // Para cada categoría configurada, busca su subcarpeta y lista sus PDF.
+  for (const c of categorias) {
+    const folderId = subcarpetas[norm(c.folder)];
+    if (!folderId) continue; // esta categoría no existe para este proyecto
+    const pathFiles = `/sites/${sid}/drives/${did}/items/${folderId}/children?$top=200&$select=id,name,size,lastModifiedDateTime,file`;
+    try {
+      out[c.key] = mapArchivos(await gjson(pathFiles), did);
+    } catch (_) {
+      out[c.key] = [];
+    }
+  }
+  return out;
 }
 
 /**
@@ -170,4 +209,4 @@ function formatDate(iso) {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-module.exports = { listarDocs, descargarDoc };
+module.exports = { listarDocsProyecto, descargarDoc, norm };

@@ -42,21 +42,18 @@ async function syncReal() {
     p.docs = {};
     for (const c of cats) p.docs[c.key] = [];
   }
-  const tareas = [];
-  for (const p of proyectos) {
-    if (!p.clienteFolder) continue;
-    for (const c of cats) tareas.push({ p, c });
-  }
+  const conFolder = proyectos.filter((p) => p.clienteFolder);
   let fallos = 0;
-  await mapLimit(tareas, 8, async ({ p, c }) => {
+  // Una llamada por proyecto lista sus subcarpetas y matchea las 4 categorías
+  // (tolerante a acentos/mayúsculas). Concurrencia moderada + reintento ante 429.
+  await mapLimit(conFolder, 6, async (p) => {
     try {
-      p.docs[c.key] = await graph.listarDocs(p.clienteFolder, c.folder);
+      p.docs = await graph.listarDocsProyecto(p.clienteFolder, cats);
     } catch (e) {
       fallos++;
-      p.docs[c.key] = [];
     }
   });
-  if (fallos) console.warn(`[sync] ${fallos}/${tareas.length} listados de docs fallaron`);
+  if (fallos) console.warn(`[sync] ${fallos}/${conFolder.length} proyectos con error al listar docs`);
 
   store.saveProyectos(proyectos);
   return { source: 'appsheet', total: proyectos.length };
