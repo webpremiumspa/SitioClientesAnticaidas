@@ -22,11 +22,7 @@ function StatusPill({ estado, label }) {
 }
 
 function ProjectCard({ p, onOpen }) {
-  const totalDocs =
-    p.docs['calculos-garantias'].length +
-    p.docs['certificados'].length +
-    p.docs['fichas-tecnicas'].length +
-    p.docs['registros'].length;
+  const totalDocs = Object.values(p.docs || {}).reduce((s, arr) => s + (arr ? arr.length : 0), 0);
 
   return (
     <button className="proj-card" onClick={() => onOpen(p)} data-screen-label={`Proyecto ${p.codigo}`}>

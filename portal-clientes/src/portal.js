@@ -3,20 +3,13 @@
 /**
  * Arma la estructura PORTAL_DATA que consume el frontend, a partir del store
  * local, para un RUT autenticado. Inyecta el ejecutivo (fijo por config).
- * Expone solo lo necesario (no filtra rutas internas de SharePoint).
+ * Las categorías de documentos son DINÁMICAS: cada carpeta de SharePoint
+ * descubierta en el sync se muestra como una categoría (ver categorias.js).
  */
 
 const config = require('./config');
 const store = require('./store');
 const { iniciales } = require('./util');
-
-// Las 4 categorías de documentos (desde config).
-const CARPETAS = config.categorias.map((c) => ({
-  key: c.key,
-  label: c.label,
-  cat: c.cat,
-  desc: c.desc,
-}));
 
 function ejecutivo() {
   return {
@@ -29,8 +22,23 @@ function ejecutivo() {
   };
 }
 
-/** Limpia un proyecto de campos internos antes de enviarlo al navegador. */
-function proyectoPublico(p) {
+/** Mapea los documentos (todas las categorías presentes) a la forma pública. */
+function docsPublicos(p, keys) {
+  const out = {};
+  for (const key of keys) {
+    const lista = (p.docs && p.docs[key]) || [];
+    out[key] = lista.map((d) => ({
+      name: d.name,
+      size: d.size,
+      date: d.date,
+      tag: d.tag,
+      path: d.docId ? `/api/doc/${encodeURIComponent(d.docId)}` : null,
+    }));
+  }
+  return out;
+}
+
+function proyectoPublico(p, keys) {
   return {
     id: p.id,
     codigo: p.codigo,
@@ -54,31 +62,26 @@ function proyectoPublico(p) {
     progreso: p.progreso,
     proximoHito: p.proximoHito,
     descripcion: p.descripcion,
-    docs: docsPublicos(p),
+    docs: docsPublicos(p, keys),
   };
-}
-
-/** Mapea las 4 categorías de documentos a la forma pública (con URL de proxy). */
-function docsPublicos(p) {
-  const out = {};
-  for (const c of config.categorias) {
-    const lista = (p.docs && p.docs[c.key]) || [];
-    out[c.key] = lista.map((d) => ({
-      name: d.name,
-      size: d.size,
-      date: d.date,
-      tag: d.tag,
-      path: d.docId ? `/api/doc/${encodeURIComponent(d.docId)}` : null,
-    }));
-  }
-  return out;
 }
 
 /** Devuelve el PORTAL_DATA para un RUT, o null si no tiene proyectos. */
 function portalData(rutNorm) {
-  // Los proyectos cancelados no se muestran al cliente.
   const proyectos = store.getProyectosPorRut(rutNorm).filter((p) => p.estado !== 'cancelado');
   if (!proyectos.length) return null;
+
+  // Categorías = unión de las carpetas presentes en los proyectos del cliente.
+  const meta = store.getCarpetasMeta();
+  const keysPresentes = new Set();
+  for (const p of proyectos) for (const k of Object.keys(p.docs || {})) keysPresentes.add(k);
+
+  const carpetas = [...keysPresentes]
+    .map((k) => meta[k] || { key: k, label: k, cat: 'gen', desc: '', order: 100 })
+    .sort((a, b) => (a.order - b.order) || a.label.localeCompare(b.label))
+    .map((c) => ({ key: c.key, label: c.label, cat: c.cat, desc: c.desc }));
+
+  const keys = carpetas.map((c) => c.key);
   const cli = proyectos[0].cliente;
   return {
     cliente: {
@@ -92,27 +95,25 @@ function portalData(rutNorm) {
       telefono: cli.telefono,
     },
     ejecutivo: ejecutivo(),
-    proyectos: proyectos.map(proyectoPublico),
-    carpetas: CARPETAS,
+    proyectos: proyectos.map((p) => proyectoPublico(p, keys)),
+    carpetas,
   };
 }
 
 /**
- * Conjunto de docId que pertenecen a los proyectos de un RUT. Se usa para
- * autorizar /api/doc: un cliente sólo puede descargar SUS documentos, y un
- * docId forjado no estará en este set (previene IDOR y acceso cruzado).
+ * Conjunto de docId que pertenecen a los proyectos de un RUT. Autoriza
+ * /api/doc: un cliente sólo descarga SUS documentos; un docId forjado no está
+ * en este set (previene IDOR y acceso cruzado).
  */
 function docIdsValidos(rutNorm) {
   const set = new Set();
   for (const p of store.getProyectosPorRut(rutNorm)) {
     if (p.estado === 'cancelado') continue;
-    for (const c of config.categorias) {
-      for (const d of (p.docs && p.docs[c.key]) || []) {
-        if (d.docId) set.add(d.docId);
-      }
+    for (const lista of Object.values(p.docs || {})) {
+      for (const d of lista || []) if (d.docId) set.add(d.docId);
     }
   }
   return set;
 }
 
-module.exports = { portalData, CARPETAS, docIdsValidos };
+module.exports = { portalData, docIdsValidos };

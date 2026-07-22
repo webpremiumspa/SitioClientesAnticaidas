@@ -46,9 +46,7 @@ function proyectos() {
       cliente: CLIENTE_INACAP,
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-02103 - 02103' }],
-      docs: {
-        certificados: [],
-      },
+      dossier: [], // proyecto en ejecución, aún sin documentos
     },
     {
       id: 'inacap-nunoa-01841',
@@ -77,21 +75,21 @@ function proyectos() {
       cliente: CLIENTE_INACAP,
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-01841 - 01841' }],
-      docs: {
-        'calculos-garantias': [
+      dossier: [
+        { name: 'CALCULOS Y GARANTIAS', docs: [
           { name: 'SafetyCentre_Calculation_AFF4262-01841.pdf', size: '1.4 MB', date: '03-11-2025', tag: 'VIGENTE', docId: 'demo-calc-01841' },
           { name: 'Warranty_Corrosion_10yrs.pdf', size: '380 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-war-01841' },
-        ],
-        certificados: [
+        ] },
+        { name: 'CERTIFICADOS DE INSTALACION', docs: [
           { name: 'CERT_INSTALACION_AFF4262-01841.pdf', size: '290 KB', date: '03-11-2025', tag: 'VIGENTE', docId: 'demo-cert-01841' },
-        ],
-        'fichas-tecnicas': [
+        ] },
+        { name: 'FICHAS TECNICAS Y MANUALES', docs: [
           { name: 'FrogLine_Data_Sheet.pdf', size: '780 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-ficha-01841' },
-        ],
-        registros: [
+        ] },
+        { name: 'REGISTROS DE ENTREGA', docs: [
           { name: 'REG_INSTALADOR_AFF4262-01841.pdf', size: '210 KB', date: '28-10-2025', tag: 'VIGENTE', docId: 'demo-reg-01841' },
-        ],
-      },
+        ] },
+      ],
     },
     {
       id: 'inacap-maipu-01620',
@@ -120,17 +118,11 @@ function proyectos() {
       cliente: CLIENTE_INACAP,
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-01620 - 01620' }],
-      docs: {
-        certificados: [
-          {
-            name: 'CERT_INSTALACION_AFF4262-01620.pdf',
-            size: '290 KB',
-            date: '20-03-2024',
-            tag: 'VIGENTE',
-            docId: 'demo-cert-01620',
-          },
-        ],
-      },
+      dossier: [
+        { name: 'CERTIFICADOS DE INSTALACION', docs: [
+          { name: 'CERT_INSTALACION_AFF4262-01620.pdf', size: '290 KB', date: '20-03-2024', tag: 'VIGENTE', docId: 'demo-cert-01620' },
+        ] },
+      ],
     },
   ];
 }

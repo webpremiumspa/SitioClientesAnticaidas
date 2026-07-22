@@ -11,13 +11,30 @@
 const config = require('./config');
 const store = require('./store');
 const { mapProyectos, buildStatusMap } = require('./mapping');
+const { metaDe } = require('./categorias');
 
 let running = false;
 let lastError = null;
 
+/**
+ * A partir de un "dossier" [{name, docs}] arma p.docs (keyed por slug) y
+ * acumula la metadata de carpeta en carpetasMeta (global).
+ */
+function aplicarDossier(p, dossier, carpetasMeta) {
+  p.docs = {};
+  for (const sub of dossier) {
+    const m = metaDe(sub.name);
+    p.docs[m.key] = sub.docs;
+    if (!carpetasMeta[m.key]) carpetasMeta[m.key] = m;
+  }
+}
+
 async function syncDemo() {
   const demo = require('./demoData');
-  store.saveProyectos(demo.proyectos());
+  const proyectos = demo.proyectos();
+  const carpetasMeta = {};
+  for (const p of proyectos) aplicarDossier(p, p.dossier || [], carpetasMeta);
+  store.save({ proyectos, carpetasMeta });
   return { source: 'demo', total: store.meta().total };
 }
 
@@ -34,28 +51,24 @@ async function syncReal() {
   const statusMap = buildStatusMap(statusRows);
   const proyectos = mapProyectos(proyectosRows, registroRows, statusMap);
 
-  // 2) Documentos por proyecto y categoría (SharePoint via Graph).
-  //    Se paraleliza con límite de concurrencia para no golpear a Graph y no
-  //    volver lento el sync (proyectos × categorías = muchas llamadas).
-  const cats = config.categorias;
-  for (const p of proyectos) {
-    p.docs = {};
-    for (const c of cats) p.docs[c.key] = [];
-  }
+  // 2) Documentos: se listan TODAS las subcarpetas de DOSSIER DE ENTREGA de
+  //    cada proyecto (dinámico, sin filtrar por lista fija). Concurrencia
+  //    moderada + reintento ante 429 (en graph).
+  for (const p of proyectos) p.docs = {};
+  const carpetasMeta = {};
   const conFolder = proyectos.filter((p) => p.clienteFolder);
   let fallos = 0;
-  // Una llamada por proyecto lista sus subcarpetas y matchea las 4 categorías
-  // (tolerante a acentos/mayúsculas). Concurrencia moderada + reintento ante 429.
   await mapLimit(conFolder, 6, async (p) => {
     try {
-      p.docs = await graph.listarDocsProyecto(p.clienteFolder, cats);
+      const dossier = await graph.listarDossier(p.clienteFolder);
+      aplicarDossier(p, dossier, carpetasMeta);
     } catch (e) {
       fallos++;
     }
   });
   if (fallos) console.warn(`[sync] ${fallos}/${conFolder.length} proyectos con error al listar docs`);
 
-  store.saveProyectos(proyectos);
+  store.save({ proyectos, carpetasMeta });
   return { source: 'appsheet', total: proyectos.length };
 }
 

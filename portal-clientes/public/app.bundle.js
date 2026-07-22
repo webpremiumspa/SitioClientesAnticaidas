@@ -517,7 +517,7 @@ function ProjectCard({
   p,
   onOpen
 }) {
-  const totalDocs = p.docs['calculos-garantias'].length + p.docs['certificados'].length + p.docs['fichas-tecnicas'].length + p.docs['registros'].length;
+  const totalDocs = Object.values(p.docs || {}).reduce((s, arr) => s + (arr ? arr.length : 0), 0);
   return /*#__PURE__*/React.createElement("button", {
     className: "proj-card",
     onClick: () => onOpen(p),
@@ -813,20 +813,36 @@ const FOLDER_ICONS = {
     d: "M3 8.4c0-1.3 1-2.4 2.4-2.4H13c.6 0 1.2.24 1.66.66l1.65 1.6c.44.4 1 .64 1.62.64H43c1.4 0 2.4 1.07 2.4 2.4v18.3c0 1.3-1 2.4-2.4 2.4H5.4C4 31 3 29.93 3 28.6V8.4Z"
   }), /*#__PURE__*/React.createElement("path", {
     d: "M17 17h14M17 21h10M17 25h7"
+  })),
+  // Ícono genérico para categorías/carpetas no reconocidas.
+  gen: /*#__PURE__*/React.createElement("svg", {
+    viewBox: "0 0 48 36",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: "1.5",
+    strokeLinecap: "round",
+    strokeLinejoin: "round"
+  }, /*#__PURE__*/React.createElement("path", {
+    d: "M3 8.4c0-1.3 1-2.4 2.4-2.4H13c.6 0 1.2.24 1.66.66l1.65 1.6c.44.4 1 .64 1.62.64H43c1.4 0 2.4 1.07 2.4 2.4v18.3c0 1.3-1 2.4-2.4 2.4H5.4C4 31 3 29.93 3 28.6V8.4Z"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M18 20h12M18 24h12"
   }))
 };
+
+// Devuelve el ícono de una categoría, con fallback genérico.
+function folderIcon(cat) {
+  return FOLDER_ICONS[cat] || FOLDER_ICONS.gen;
+}
 function ProjectDetail({
   data,
   project,
   onOpenFolder,
   onOpenModal
 }) {
-  const counts = {
-    'calculos-garantias': project.docs['calculos-garantias'].length,
-    'certificados': project.docs['certificados'].length,
-    'fichas-tecnicas': project.docs['fichas-tecnicas'].length,
-    'registros': project.docs['registros'].length
-  };
+  const counts = {};
+  data.carpetas.forEach(c => {
+    counts[c.key] = (project.docs[c.key] || []).length;
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "detail",
     "data-screen-label": `03 Detalle ${project.codigo}`
@@ -1032,7 +1048,7 @@ function ProjectDetail({
       disabled: n === 0
     }, /*#__PURE__*/React.createElement("div", {
       className: "folder-icon"
-    }, FOLDER_ICONS[c.cat]), /*#__PURE__*/React.createElement("span", {
+    }, folderIcon(c.cat)), /*#__PURE__*/React.createElement("span", {
       className: "open-tag"
     }, n === 0 ? 'vacío' : 'abrir →'), /*#__PURE__*/React.createElement("div", {
       className: "count"
@@ -1077,7 +1093,7 @@ function FolderView({
     className: "folder-header"
   }, /*#__PURE__*/React.createElement("div", {
     className: "icon-wrap"
-  }, FOLDER_ICONS[folder.cat]), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+  }, folderIcon(folder.cat)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "t-eye"
   }, project.codigo, " \xB7 ", project.nombre.split('—')[1]?.trim() || project.comuna), /*#__PURE__*/React.createElement("h2", null, folder.label), /*#__PURE__*/React.createElement("p", null, folder.desc))), docs.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty-state"

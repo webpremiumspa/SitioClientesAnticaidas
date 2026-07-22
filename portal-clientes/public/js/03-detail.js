@@ -28,15 +28,23 @@ const FOLDER_ICONS = {
       <path d="M17 17h14M17 21h10M17 25h7" />
     </svg>
   ),
+  // Ícono genérico para categorías/carpetas no reconocidas.
+  gen: (
+    <svg viewBox="0 0 48 36" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 8.4c0-1.3 1-2.4 2.4-2.4H13c.6 0 1.2.24 1.66.66l1.65 1.6c.44.4 1 .64 1.62.64H43c1.4 0 2.4 1.07 2.4 2.4v18.3c0 1.3-1 2.4-2.4 2.4H5.4C4 31 3 29.93 3 28.6V8.4Z"/>
+      <path d="M18 20h12M18 24h12" />
+    </svg>
+  ),
 };
 
+// Devuelve el ícono de una categoría, con fallback genérico.
+function folderIcon(cat) {
+  return FOLDER_ICONS[cat] || FOLDER_ICONS.gen;
+}
+
 function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
-  const counts = {
-    'calculos-garantias': project.docs['calculos-garantias'].length,
-    'certificados': project.docs['certificados'].length,
-    'fichas-tecnicas': project.docs['fichas-tecnicas'].length,
-    'registros': project.docs['registros'].length,
-  };
+  const counts = {};
+  data.carpetas.forEach((c) => { counts[c.key] = (project.docs[c.key] || []).length; });
 
   return (
     <div className="detail" data-screen-label={`03 Detalle ${project.codigo}`}>
@@ -160,7 +168,7 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
               onClick={() => n > 0 && onOpenFolder(c.key)}
               disabled={n === 0}
             >
-              <div className="folder-icon">{FOLDER_ICONS[c.cat]}</div>
+              <div className="folder-icon">{folderIcon(c.cat)}</div>
               <span className="open-tag">{n === 0 ? 'vacío' : 'abrir →'}</span>
               <div className="count">{n}</div>
               <h3>{c.label}</h3>
@@ -197,7 +205,7 @@ function FolderView({ data, project, folderKey, onBack }) {
     <div className="folder-view" data-screen-label={`04 ${folder.label}`}>
       <div className={'folder-list cat-' + folder.cat}>
         <div className="folder-header">
-          <div className="icon-wrap">{FOLDER_ICONS[folder.cat]}</div>
+          <div className="icon-wrap">{folderIcon(folder.cat)}</div>
           <div>
             <div className="t-eye">{project.codigo} · {project.nombre.split('—')[1]?.trim() || project.comuna}</div>
             <h2>{folder.label}</h2>

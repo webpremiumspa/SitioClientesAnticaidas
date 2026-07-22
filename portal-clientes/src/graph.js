@@ -107,16 +107,6 @@ function encodePath(p) {
   return p.split('/').map(encodeURIComponent).join('/');
 }
 
-/** Normaliza un nombre para comparar sin acentos, mayúsculas ni espacios extra. */
-function norm(s) {
-  return String(s || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '') // quita acentos (marcas diacríticas)
-    .toUpperCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
 function mapArchivos(json, did) {
   return (json.value || [])
     .filter((it) => it.file && /\.pdf$/i.test(it.name))
@@ -130,17 +120,14 @@ function mapArchivos(json, did) {
 }
 
 /**
- * Lista los documentos de TODAS las categorías de un proyecto, matcheando las
- * subcarpetas reales de "DOSSIER DE ENTREGA" contra config.categorias de forma
- * tolerante (sin acentos/mayúsculas/espacios). Devuelve { [catKey]: docs[] }.
+ * Lista TODAS las subcarpetas de "DOSSIER DE ENTREGA" de un proyecto con sus
+ * PDF. No hace match contra ninguna lista: devuelve las carpetas tal como están
+ * en SharePoint. La clasificación/íconos se resuelve después (categorias.js).
  * @param {string} carpetaProyecto  ej. "ACB5925 CENTRAL COLMITO SA"
- * @param {Array} categorias        config.categorias
+ * @returns {Promise<Array>} [{ name, docs: [...] }]
  */
-async function listarDocsProyecto(carpetaProyecto, categorias) {
-  const out = {};
-  for (const c of categorias) out[c.key] = [];
-  if (!carpetaProyecto) return out;
-
+async function listarDossier(carpetaProyecto) {
+  if (!carpetaProyecto) return [];
   const sid = await getSiteId();
   const did = await getDriveId();
   const relDossier = `${carpetaProyecto}/DOSSIER DE ENTREGA`;
@@ -150,33 +137,28 @@ async function listarDocsProyecto(carpetaProyecto, categorias) {
   try {
     dossier = await gjson(pathDossier);
   } catch (e) {
-    if (String(e.message).includes('HTTP 404')) return out; // proyecto sin DOSSIER
+    if (String(e.message).includes('HTTP 404')) return []; // proyecto sin DOSSIER
     throw e;
   }
 
-  // Índice de subcarpetas reales por nombre normalizado.
-  const subcarpetas = {};
-  for (const it of dossier.value || []) {
-    if (it.folder) subcarpetas[norm(it.name)] = it.id;
-  }
-
-  // Para cada categoría configurada, busca su subcarpeta y lista sus PDF.
-  for (const c of categorias) {
-    const folderId = subcarpetas[norm(c.folder)];
-    if (!folderId) continue; // esta categoría no existe para este proyecto
-    const pathFiles = `/sites/${sid}/drives/${did}/items/${folderId}/children?$top=200&$select=id,name,size,lastModifiedDateTime,file`;
+  const subcarpetas = (dossier.value || []).filter((it) => it.folder);
+  const out = [];
+  for (const sf of subcarpetas) {
+    let docs = [];
     try {
-      out[c.key] = mapArchivos(await gjson(pathFiles), did);
+      const pathFiles = `/sites/${sid}/drives/${did}/items/${sf.id}/children?$top=200&$select=id,name,size,lastModifiedDateTime,file`;
+      docs = mapArchivos(await gjson(pathFiles), did);
     } catch (_) {
-      out[c.key] = [];
+      docs = [];
     }
+    out.push({ name: sf.name, docs });
   }
   return out;
 }
 
 /**
  * Devuelve la respuesta cruda (stream) del contenido de un documento para
- * hacer proxy de descarga. `docId` es el token base64url de listarCertificados.
+ * hacer proxy de descarga. `docId` es el token base64url de listarDossier.
  */
 async function descargarDoc(docId) {
   const decoded = Buffer.from(docId, 'base64url').toString('utf8');
@@ -209,4 +191,4 @@ function formatDate(iso) {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-module.exports = { listarDocsProyecto, descargarDoc, norm };
+module.exports = { listarDossier, descargarDoc };

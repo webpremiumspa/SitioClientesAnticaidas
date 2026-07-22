@@ -32,7 +32,7 @@ function ensureDir() {
 let cache = null;
 
 function emptyDb() {
-  return { updatedAt: null, proyectos: [] };
+  return { updatedAt: null, proyectos: [], carpetasMeta: {} };
 }
 
 /** Carga el store desde disco (una vez) a memoria. */
@@ -52,14 +52,23 @@ function load() {
   return cache;
 }
 
-/** Reemplaza el conjunto de proyectos y persiste a disco. */
-function saveProyectos(proyectos) {
+/** Reemplaza proyectos + metadata de carpetas y persiste a disco. */
+function save({ proyectos, carpetasMeta }) {
   ensureDir();
-  cache = { updatedAt: new Date().toISOString(), proyectos: proyectos || [] };
+  cache = {
+    updatedAt: new Date().toISOString(),
+    proyectos: proyectos || [],
+    carpetasMeta: carpetasMeta || {},
+  };
   const tmp = DB_FILE + '.tmp';
   fs.writeFileSync(tmp, JSON.stringify(cache), 'utf8');
   fs.renameSync(tmp, DB_FILE); // escritura atómica
   return cache;
+}
+
+/** Metadata global de carpetas descubiertas { key: {label,cat,desc,order} }. */
+function getCarpetasMeta() {
+  return load().carpetasMeta || {};
 }
 
 /** Todos los proyectos cacheados. */
@@ -78,4 +87,4 @@ function meta() {
   return { updatedAt: db.updatedAt, total: db.proyectos.length };
 }
 
-module.exports = { load, saveProyectos, getProyectos, getProyectosPorRut, meta };
+module.exports = { load, save, getProyectos, getProyectosPorRut, getCarpetasMeta, meta };

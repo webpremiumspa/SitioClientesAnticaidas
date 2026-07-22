@@ -39,4 +39,33 @@ function generarCodigo(n = 6) {
   return s;
 }
 
-module.exports = { normalizeRut, sameRut, iniciales, generarCodigo };
+/** Normaliza un texto para comparar sin acentos, mayúsculas ni espacios extra. */
+function norm(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '') // quita marcas diacríticas (acentos)
+    .toUpperCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** slug estable a partir de un nombre de carpeta: "CÁLCULOS Y GARANTÍAS" -> "calculos-y-garantias". */
+function slugKey(s) {
+  return norm(s)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+/** Título legible: "CALCULOS Y GARANTIAS" -> "Calculos y Garantias". */
+function tituloCase(s) {
+  const menores = new Set(['y', 'de', 'del', 'la', 'las', 'el', 'los', 'e', 'o', 'u']);
+  return String(s || '')
+    .toLowerCase()
+    .split(/\s+/)
+    .map((w, i) => (i > 0 && menores.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1)))
+    .join(' ')
+    .trim();
+}
+
+module.exports = { normalizeRut, sameRut, iniciales, generarCodigo, norm, slugKey, tituloCase };
