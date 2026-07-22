@@ -21,7 +21,8 @@ app.disable('x-powered-by');
 // cabeceras en el .htaccess del docroot o en Cloudflare (ver README).
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
+  // SAMEORIGIN (no DENY): el visor de PDF usa un <iframe> del mismo origen.
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   if (config.env === 'production') {
@@ -39,7 +40,7 @@ app.use((req, res, next) => {
       "frame-src 'self'",
       "object-src 'none'",
       "base-uri 'self'",
-      "frame-ancestors 'none'",
+      "frame-ancestors 'self'", // permite el iframe del visor de PDF (mismo origen)
     ].join('; ')
   );
   next();
