@@ -61,7 +61,15 @@ function ProjectCard({ p, onOpen }) {
       </div>
 
       <div className="proj-side">
-        <span className="docs-count">{totalDocs} documentos</span>
+        <div className="row" style={{ gap: 8, justifyContent: 'flex-end' }}>
+          {p.certVigencia && (
+            <span className={'cert-chip ' + p.certVigencia}>
+              <span className="dot"></span>
+              {p.certVigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos'}
+            </span>
+          )}
+          <span className="docs-count">{totalDocs} documentos</span>
+        </div>
         <span className="open">
           Abrir proyecto
           <Ico.arrowR width="14" height="14" />

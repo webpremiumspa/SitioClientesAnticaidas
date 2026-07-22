@@ -68,4 +68,23 @@ function tituloCase(s) {
     .trim();
 }
 
-module.exports = { normalizeRut, sameRut, iniciales, generarCodigo, norm, slugKey, tituloCase };
+/** Convierte fecha AppSheet US "MM/DD/YYYY[ hh:mm:ss]" a ISO "YYYY-MM-DD". */
+function usToISO(s) {
+  if (!s) return null;
+  const datePart = String(s).trim().split(' ')[0];
+  const m = datePart.split('/');
+  if (m.length !== 3) return null;
+  const [mm, dd, yyyy] = m;
+  const p = (x) => String(x).padStart(2, '0');
+  if (!yyyy || yyyy.length !== 4) return null;
+  return `${yyyy}-${p(mm)}-${p(dd)}`;
+}
+
+/** Fecha de hoy en ISO "YYYY-MM-DD". */
+function hoyISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+module.exports = {
+  normalizeRut, sameRut, iniciales, generarCodigo, norm, slugKey, tituloCase, usToISO, hoyISO,
+};

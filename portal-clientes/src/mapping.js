@@ -14,7 +14,7 @@
  *      /Clientes/{CODIGO} {CLIENTE}/COMERCIAL  ->  "{CODIGO} {CLIENTE}"
  */
 
-const { normalizeRut } = require('./util');
+const { normalizeRut, usToISO } = require('./util');
 
 function pick(row, ...keys) {
   for (const k of keys) {
@@ -90,6 +90,18 @@ function mapEstadoNombre(nombre) {
   return { estado: 'en-ejecucion', estadoLabel: nombre || 'En proceso' };
 }
 
+/** ISO de PROX MANTENCION del registro; fallback EOMONTH(FECHA RECEPCION,+12). */
+function calcProxMantencion(reg0) {
+  const directa = usToISO(pick(reg0, 'PROX MANTENCION', 'PROX_MANTENCION'));
+  if (directa) return directa;
+  const rec = usToISO(pick(reg0, 'FECHA RECEPCION', 'FECHA_RECEPCION'));
+  if (!rec) return null;
+  const d = new Date(rec + 'T00:00:00Z');
+  // EOMONTH(+12): último día del mismo mes, un año después.
+  const eom = new Date(Date.UTC(d.getUTCFullYear() + 1, d.getUTCMonth() + 1, 0));
+  return eom.toISOString().slice(0, 10);
+}
+
 function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
   const codigo = pick(pRow, 'CODIGO DE PROYECTO');
   const cliente = pick(pRow, 'CLIENTE', 'EMPRESA');
@@ -100,6 +112,11 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
   const registros = registrosDelProyecto.map((r) => ({
     idRegistro: pick(r, 'ID REGISTRO'),
   }));
+
+  // Fecha de próxima mantención (para vigencia de certificados). Todos los
+  // registros comparten la misma, se toma la del primero. Si la columna virtual
+  // no viene, se calcula como EOMONTH(FECHA RECEPCION, +12).
+  const proxMantencionISO = calcProxMantencion(reg0);
 
   // Extensión: suma de metros de los registros (si los hay).
   let metros = 0;
@@ -125,6 +142,7 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
     fechaInicio: fechaUSaDMY(pick(pRow, 'FECHA_DE_INICIO')),
     fechaEntrega: fechaUSaDMY(pick(pRow, 'FECHA DE FINALIZACION')),
     fechaInforme: null,
+    proxMantencionISO, // para vigencia de certificados
     progreso: estado === 'terminado' || estado === 'archivado' ? 1 : 0.5,
     proximoHito: '',
     descripcion: pick(pRow, 'OBSERVACIONES') || '',

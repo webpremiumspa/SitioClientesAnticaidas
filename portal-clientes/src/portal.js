@@ -9,7 +9,7 @@
 
 const config = require('./config');
 const store = require('./store');
-const { iniciales } = require('./util');
+const { iniciales, hoyISO } = require('./util');
 
 function ejecutivo() {
   return {
@@ -82,6 +82,20 @@ function portalData(rutNorm) {
     .map((c) => ({ key: c.key, label: c.label, cat: c.cat, desc: c.desc }));
 
   const keys = carpetas.map((c) => c.key);
+  // Categoría de certificados (la que la config marca como 'ci').
+  const certCat = carpetas.find((c) => c.cat === 'ci');
+  const hoy = hoyISO();
+
+  const proyectosPub = proyectos.map((p) => {
+    const pub = proyectoPublico(p, keys);
+    // Chip de vigencia: sólo si el proyecto tiene certificados.
+    const certDocs = certCat ? pub.docs[certCat.key] || [] : [];
+    if (certDocs.length && p.proxMantencionISO) {
+      pub.certVigencia = p.proxMantencionISO >= hoy ? 'vigente' : 'vencido';
+    }
+    return pub;
+  });
+
   const cli = proyectos[0].cliente;
   return {
     cliente: {
@@ -95,7 +109,7 @@ function portalData(rutNorm) {
       telefono: cli.telefono,
     },
     ejecutivo: ejecutivo(),
-    proyectos: proyectos.map((p) => proyectoPublico(p, keys)),
+    proyectos: proyectosPub,
     carpetas,
   };
 }

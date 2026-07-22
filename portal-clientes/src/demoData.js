@@ -75,6 +75,7 @@ function proyectos() {
       cliente: CLIENTE_INACAP,
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-01841 - 01841' }],
+      proxMantencionISO: '2026-10-31', // futuro -> certificados vigentes
       dossier: [
         { name: 'CALCULOS Y GARANTIAS', docs: [
           { name: 'SafetyCentre_Calculation_AFF4262-01841.pdf', size: '1.4 MB', date: '03-11-2025', tag: 'VIGENTE', docId: 'demo-calc-01841' },
@@ -118,6 +119,7 @@ function proyectos() {
       cliente: CLIENTE_INACAP,
       clienteFolder: 'AFF4262 INACAP',
       registros: [{ idRegistro: 'AFF4262-01620 - 01620' }],
+      proxMantencionISO: '2025-03-31', // pasado -> certificados vencidos
       dossier: [
         { name: 'CERTIFICADOS DE INSTALACION', docs: [
           { name: 'CERT_INSTALACION_AFF4262-01620.pdf', size: '290 KB', date: '20-03-2024', tag: 'VIGENTE', docId: 'demo-cert-01620' },
