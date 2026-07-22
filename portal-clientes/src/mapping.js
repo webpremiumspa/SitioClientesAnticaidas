@@ -90,16 +90,39 @@ function mapEstadoNombre(nombre) {
   return { estado: 'en-ejecucion', estadoLabel: nombre || 'En proceso' };
 }
 
+/** Último día del mes (ISO) para año/mes dados (mes 1-12). */
+function finDeMesISO(anio, mes) {
+  return new Date(Date.UTC(anio, mes, 0)).toISOString().slice(0, 10);
+}
+
+/**
+ * Interpreta una fecha AppSheet flexible:
+ *  - "MM/DD/YYYY[ hh:mm:ss]" -> ese día
+ *  - "MM/YYYY"               -> último día de ese mes
+ * Devuelve ISO "YYYY-MM-DD" o null.
+ */
+function fechaFlexISO(s) {
+  if (!s) return null;
+  const datePart = String(s).trim().split(' ')[0];
+  const parts = datePart.split('/');
+  if (parts.length === 3) return usToISO(s);
+  if (parts.length === 2) {
+    const mm = parseInt(parts[0], 10);
+    const yyyy = parseInt(parts[1], 10);
+    if (mm >= 1 && mm <= 12 && yyyy > 1900) return finDeMesISO(yyyy, mm);
+  }
+  return null;
+}
+
 /** ISO de PROX MANTENCION del registro; fallback EOMONTH(FECHA RECEPCION,+12). */
 function calcProxMantencion(reg0) {
-  const directa = usToISO(pick(reg0, 'PROX MANTENCION', 'PROX_MANTENCION'));
+  const directa = fechaFlexISO(pick(reg0, 'PROX MANTENCION', 'PROX_MANTENCION'));
   if (directa) return directa;
   const rec = usToISO(pick(reg0, 'FECHA RECEPCION', 'FECHA_RECEPCION'));
   if (!rec) return null;
   const d = new Date(rec + 'T00:00:00Z');
   // EOMONTH(+12): último día del mismo mes, un año después.
-  const eom = new Date(Date.UTC(d.getUTCFullYear() + 1, d.getUTCMonth() + 1, 0));
-  return eom.toISOString().slice(0, 10);
+  return finDeMesISO(d.getUTCFullYear() + 1, d.getUTCMonth() + 1);
 }
 
 function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
