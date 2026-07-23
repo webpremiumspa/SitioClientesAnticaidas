@@ -14,7 +14,7 @@
  *      /Clientes/{CODIGO} {CLIENTE}/COMERCIAL  ->  "{CODIGO} {CLIENTE}"
  */
 
-const { normalizeRut, usToISO } = require('./util');
+const { normalizeRut, usToISO, tituloCase } = require('./util');
 
 function pick(row, ...keys) {
   for (const k of keys) {
@@ -114,6 +114,26 @@ function fechaFlexISO(s) {
   return null;
 }
 
+/** Arma una descripción dinámica del proyecto, omitiendo lo que venga vacío. */
+function armarDescripcion({ tipoSistema, extension, cantidadUsuarios, comuna, region, diasVendidos }) {
+  let frase = tipoSistema ? `Instalación de ${tipoSistema}` : 'Proyecto de sistema anticaídas';
+
+  const detalles = [];
+  if (extension) detalles.push(`una extensión total de ${extension}`);
+  if (cantidadUsuarios) {
+    const pl = cantidadUsuarios === 1 ? '' : 's';
+    detalles.push(`capacidad para ${cantidadUsuarios} usuario${pl} simultáneo${pl}`);
+  }
+  if (detalles.length) frase += `, con ${detalles.join(' y ')}`;
+
+  const ubic = [comuna, region].filter(Boolean).map((x) => tituloCase(x)).join(', ');
+  if (ubic) frase += `, en ${ubic}`;
+  frase += '.';
+
+  if (diasVendidos) frase += ` Duración estimada: ${diasVendidos} día${diasVendidos === 1 ? '' : 's'}.`;
+  return frase;
+}
+
 /** ISO de PROX MANTENCION del registro; fallback EOMONTH(FECHA RECEPCION,+12). */
 function calcProxMantencion(reg0) {
   const directa = fechaFlexISO(pick(reg0, 'PROX MANTENCION', 'PROX_MANTENCION'));
@@ -145,17 +165,25 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
   let metros = 0;
   for (const r of registrosDelProyecto) metros += parseFloat(r['METROS TOTALES']) || 0;
 
+  const tipoSistema = tipoSistemaDesdeConteos(pRow) || pick(reg0, 'TIPO DE SISTEMA');
+  const extension = metros > 0 ? `${metros.toLocaleString('es-CL')} m` : '';
+  const cantidadUsuarios = Number(pick(reg0, 'CANTIDAD DE USUARIOS')) || null;
+  const comuna = pick(pRow, 'COMUNA DE INSTALACION', 'COMUNA');
+  const region = pick(pRow, 'REGION DE INSTALACION', 'REGION');
+  const diasVendidos = Number(pick(pRow, 'DIAS VENDIDOS')) || null;
+  const descripcion = armarDescripcion({ tipoSistema, extension, cantidadUsuarios, comuna, region, diasVendidos });
+
   return {
     id: String(codigo).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     codigo,
     nombre: pick(pRow, 'NOMBRE DEL PROYECTO') || pick(pRow, 'DIRECCION DE INSTALACION') || codigo,
-    sub: tipoSistemaDesdeConteos(pRow) || pick(reg0, 'TIPO DE SISTEMA'),
+    sub: tipoSistema,
     direccion: pick(pRow, 'DIRECCION DE INSTALACION', 'DIRECCION'),
-    comuna: pick(pRow, 'COMUNA DE INSTALACION', 'COMUNA'),
-    region: pick(pRow, 'REGION DE INSTALACION', 'REGION'),
-    tipoSistema: tipoSistemaDesdeConteos(pRow) || pick(reg0, 'TIPO DE SISTEMA'),
-    extension: metros > 0 ? `${metros.toLocaleString('es-CL')} m` : '',
-    cantidadUsuarios: Number(pick(reg0, 'CANTIDAD DE USUARIOS')) || null,
+    comuna,
+    region,
+    tipoSistema,
+    extension,
+    cantidadUsuarios,
     diseno: pick(pRow, 'DISEÑADO POR'),
     instalador: pick(reg0, 'INSTALADOR'),
     solicitante: pick(pRow, 'NOMBRE CONTACTO'),
@@ -168,7 +196,7 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
     proxMantencionISO, // para vigencia de certificados
     progreso: estado === 'terminado' || estado === 'archivado' ? 1 : 0.5,
     proximoHito: '',
-    descripcion: pick(pRow, 'OBSERVACIONES') || '',
+    descripcion,
 
     cliente: {
       rut: normalizeRut(pick(pRow, 'RUT')),
