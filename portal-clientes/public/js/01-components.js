@@ -258,7 +258,7 @@ function Login({ onLogin }) {
                 inputMode="text"
               />
               <span className={'hint' + (err ? ' err' : '')}>
-                {err || 'Formato: 8 dígitos + dígito verificador (ej. 60.711.000-K).'}
+                {err || 'Formato: 8 dígitos + dígito verificador (ej. 76.123.456-7).'}
               </span>
             </div>
 

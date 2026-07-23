@@ -435,7 +435,7 @@ function Login({
     inputMode: "text"
   }), /*#__PURE__*/React.createElement("span", {
     className: 'hint' + (err ? ' err' : '')
-  }, err || 'Formato: 8 dígitos + dígito verificador (ej. 60.711.000-K).')), /*#__PURE__*/React.createElement("button", {
+  }, err || 'Formato: 8 dígitos + dígito verificador (ej. 76.123.456-7).')), /*#__PURE__*/React.createElement("button", {
     type: "submit",
     className: "btn primary block",
     style: {
@@ -747,7 +747,7 @@ function Dashboard({
     className: "t"
   }, "Solicitar nuevo proyecto"), /*#__PURE__*/React.createElement("div", {
     className: "d"
-  }, "Cotiza una nueva l\xEDnea de vida o sistema antica\xEDdas."))), /*#__PURE__*/React.createElement("div", {
+  }, "Cotiza una nueva l\xEDnea de vida o sistema antica\xEDdas."))), data.proximaInspeccion && /*#__PURE__*/React.createElement("div", {
     className: "side-card"
   }, /*#__PURE__*/React.createElement("h4", null, "Pr\xF3xima inspecci\xF3n"), /*#__PURE__*/React.createElement("p", {
     className: "sub",
@@ -786,13 +786,13 @@ function Dashboard({
       fontSize: 13,
       fontWeight: 600
     }
-  }, "\xD1u\xF1oa LV Norte \xB7 LV Sur"), /*#__PURE__*/React.createElement("div", {
+  }, data.proximaInspeccion.proyecto), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 12,
       color: 'var(--ink-3)',
       fontFamily: 'var(--font-mono)'
     }
-  }, "Inspecci\xF3n anual \xB7 10-2026"))))));
+  }, "Inspecci\xF3n anual \xB7 ", data.proximaInspeccion.fecha))))));
 }
 window.Dashboard = Dashboard;
 window.StatusPill = StatusPill;

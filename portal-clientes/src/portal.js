@@ -105,6 +105,25 @@ function portalData(rutNorm) {
     },
     ejecutivo: ejecutivo(),
     proyectos: proyectos.map((p) => proyectoPublico(p, meta, hoy)),
+    proximaInspeccion: proximaInspeccion(proyectos, hoy),
+  };
+}
+
+/**
+ * Inspección/mantención futura más próxima del cliente (según PROX MANTENCION).
+ * Devuelve { proyecto, fecha (MM-YYYY) } o null si no hay ninguna futura.
+ */
+function proximaInspeccion(proyectos, hoy) {
+  let mejor = null;
+  for (const p of proyectos) {
+    const iso = p.proxMantencionISO;
+    if (!iso || iso < hoy) continue; // sin fecha o ya vencida
+    if (!mejor || iso < mejor.iso) mejor = { iso, nombre: p.nombre };
+  }
+  if (!mejor) return null;
+  return {
+    proyecto: mejor.nombre,
+    fecha: `${mejor.iso.slice(5, 7)}-${mejor.iso.slice(0, 4)}`, // MM-YYYY
   };
 }
 

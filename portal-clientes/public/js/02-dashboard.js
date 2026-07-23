@@ -192,27 +192,29 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
           </div>
         </button>
 
-        <div className="side-card">
-          <h4>Próxima inspección</h4>
-          <p className="sub" style={{ marginBottom: 12 }}>Mantén tu sistema certificado al día.</p>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-            background: 'var(--bg-paper-2)', borderRadius: 10, border: '1px solid var(--border-light)'
-          }}>
+        {data.proximaInspeccion && (
+          <div className="side-card">
+            <h4>Próxima inspección</h4>
+            <p className="sub" style={{ marginBottom: 12 }}>Mantén tu sistema certificado al día.</p>
             <div style={{
-              width: 40, height: 40, borderRadius: 8, background: 'var(--accent-soft)',
-              color: 'var(--accent)', display: 'grid', placeItems: 'center'
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+              background: 'var(--bg-paper-2)', borderRadius: 10, border: '1px solid var(--border-light)'
             }}>
-              <Ico.shield width="18" height="18" />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>Ñuñoa LV Norte · LV Sur</div>
-              <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-                Inspección anual · 10-2026
+              <div style={{
+                width: 40, height: 40, borderRadius: 8, background: 'var(--accent-soft)',
+                color: 'var(--accent)', display: 'grid', placeItems: 'center'
+              }}>
+                <Ico.shield width="18" height="18" />
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{data.proximaInspeccion.proyecto}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
+                  Inspección anual · {data.proximaInspeccion.fecha}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </aside>
     </div>
   );
