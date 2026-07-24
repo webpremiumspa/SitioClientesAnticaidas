@@ -86,7 +86,7 @@ function proyectoPublico(p, meta, hoy) {
 
 /** Devuelve el PORTAL_DATA para un RUT, o null si no tiene proyectos. */
 function portalData(rutNorm) {
-  const proyectos = store.getProyectosPorRut(rutNorm).filter((p) => p.estado !== 'cancelado');
+  const proyectos = store.getProyectosPorRut(rutNorm);
   if (!proyectos.length) return null;
 
   const meta = store.getCarpetasMeta();
@@ -135,7 +135,6 @@ function proximaInspeccion(proyectos, hoy) {
 function docIdsValidos(rutNorm) {
   const set = new Set();
   for (const p of store.getProyectosPorRut(rutNorm)) {
-    if (p.estado === 'cancelado') continue;
     for (const lista of Object.values(p.docs || {})) {
       for (const d of lista || []) if (d.docId) set.add(d.docId);
     }

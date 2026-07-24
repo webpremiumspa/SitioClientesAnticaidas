@@ -83,9 +83,8 @@ function mapEstadoNombre(nombre) {
   if (['FINALIZADO', 'CERTIFICADOS'].includes(e)) {
     return { estado: 'terminado', estadoLabel: 'Terminado' };
   }
-  if (['CANCELADO', 'CANCELADA'].includes(e)) {
-    // Los proyectos cancelados NO se muestran al cliente (se filtran en portal.js).
-    return { estado: 'cancelado', estadoLabel: 'Cancelado' };
+  if (['PENDIENTE', 'CANCELADO', 'CANCELADA', 'ARCHIVADO'].includes(e)) {
+    return { estado: 'archivado', estadoLabel: nombre || 'Archivado' };
   }
   return { estado: 'en-ejecucion', estadoLabel: nombre || 'En proceso' };
 }
@@ -145,10 +144,12 @@ function calcProxMantencion(reg0) {
   return finDeMesISO(d.getUTCFullYear() + 1, d.getUTCMonth() + 1);
 }
 
-function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
+function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}, finalOrden = 6) {
   const codigo = pick(pRow, 'CODIGO DE PROYECTO');
   const cliente = pick(pRow, 'CLIENTE', 'EMPRESA');
-  const estadoNombre = statusMap[String(pick(pRow, 'ESTADO'))] || '';
+  const st = statusMap[String(pick(pRow, 'ESTADO'))] || {};
+  const estadoNombre = st.nombre || '';
+  const orden = st.orden;
   const { estado, estadoLabel } = mapEstadoNombre(estadoNombre);
 
   const reg0 = registrosDelProyecto[0] || {};
@@ -194,7 +195,11 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}) {
     fechaEntrega: fechaUSaDMY(pick(pRow, 'FECHA DE FINALIZACION')),
     fechaInforme: null,
     proxMantencionISO, // para vigencia de certificados
-    progreso: estado === 'terminado' || estado === 'archivado' ? 1 : 0.5,
+    // Progreso real según el orden de la etapa (orden / orden de FINALIZADO).
+    // La barra solo se muestra en proyectos en ejecución.
+    progreso: (estado === 'terminado' || estado === 'archivado')
+      ? 1
+      : (orden ? Math.min(orden / finalOrden, 1) : 0.5),
     proximoHito: '',
     descripcion,
 
@@ -224,9 +229,10 @@ function mapProyectos(proyectosRows, registroRows, statusMap = {}) {
     if (!regsPorCodigo.has(cod)) regsPorCodigo.set(cod, []);
     regsPorCodigo.get(cod).push(r);
   }
+  const finalOrden = ordenFinal(statusMap);
   return (proyectosRows || []).map((p) => {
     const cod = pick(p, 'CODIGO DE PROYECTO');
-    return mapProyecto(p, regsPorCodigo.get(cod) || [], statusMap);
+    return mapProyecto(p, regsPorCodigo.get(cod) || [], statusMap, finalOrden);
   });
 }
 
@@ -235,10 +241,21 @@ function buildStatusMap(statusRows) {
   const map = {};
   for (const r of statusRows || []) {
     const id = r['id_status'] !== undefined ? String(r['id_status']) : '';
-    const nombre = r['nombre'] || r['Nombre'] || '';
-    if (id) map[id] = nombre;
+    if (!id) continue;
+    map[id] = {
+      nombre: r['nombre'] || r['Nombre'] || '',
+      orden: Number(r['orden'] || r['ORDEN'] || r['Orden']) || null,
+    };
   }
   return map;
+}
+
+/** Orden del estado FINALIZADO (denominador del progreso). Default 6. */
+function ordenFinal(statusMap) {
+  for (const v of Object.values(statusMap || {})) {
+    if (String(v.nombre).toUpperCase().trim() === 'FINALIZADO') return v.orden || 6;
+  }
+  return 6;
 }
 
 module.exports = { mapProyecto, mapProyectos, buildStatusMap, fechaUSaDMY, carpetaProyecto, pick };
