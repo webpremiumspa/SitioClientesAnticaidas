@@ -298,6 +298,26 @@ function CertChip({
   }), vigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos');
 }
 
+/* ---------- Barra de navegación "volver" ----------
+   Se muestra arriba de cada pantalla interior (detalle y carpeta) para que
+   siempre haya una salida visible hacia la pantalla anterior. */
+function BackBar({
+  label,
+  onBack,
+  children
+}) {
+  return /*#__PURE__*/React.createElement("div", {
+    className: "back-bar"
+  }, /*#__PURE__*/React.createElement("button", {
+    type: "button",
+    className: "btn ghost sm back-btn",
+    onClick: onBack
+  }, /*#__PURE__*/React.createElement(Ico.chevL, {
+    width: "15",
+    height: "15"
+  }), label), children);
+}
+
 /* ===========================================================
    LOGIN
    =========================================================== */
@@ -518,6 +538,7 @@ function Login({
 window.Login = Login;
 window.Ico = Ico;
 window.Logo = Logo;
+window.BackBar = BackBar;
 window.formatRut = formatRut;
 window.cleanRut = cleanRut;
 
@@ -526,6 +547,8 @@ window.cleanRut = cleanRut;
    DASHBOARD — lista de proyectos, KPIs, ejecutivo, acciones rápidas
    ================================================================ */
 
+// Los proyectos archivados (PENDIENTE/CANCELADO) no se muestran en el portal:
+// no tienen pestaña, no cuentan en los KPI y se excluyen de la lista.
 const TABS = [{
   key: 'todos',
   label: 'Todos'
@@ -535,9 +558,6 @@ const TABS = [{
 }, {
   key: 'terminado',
   label: 'Terminados'
-}, {
-  key: 'archivado',
-  label: 'Archivados'
 }];
 function StatusPill({
   estado,
@@ -613,22 +633,22 @@ function Dashboard({
   onOpenModal
 }) {
   const [tab, setTab] = useState('todos');
+  const visibles = useMemo(() => data.proyectos.filter(p => p.estado !== 'archivado'), [data]);
   const counts = useMemo(() => {
     const c = {
-      todos: data.proyectos.length
+      todos: visibles.length
     };
     for (const t of TABS.slice(1)) {
-      c[t.key] = data.proyectos.filter(p => p.estado === t.key).length;
+      c[t.key] = visibles.filter(p => p.estado === t.key).length;
     }
     return c;
-  }, [data]);
+  }, [visibles]);
   const list = useMemo(() => {
-    if (tab === 'todos') return data.proyectos;
-    return data.proyectos.filter(p => p.estado === tab);
-  }, [tab, data]);
+    if (tab === 'todos') return visibles;
+    return visibles.filter(p => p.estado === tab);
+  }, [tab, visibles]);
   const active = counts['en-ejecucion'];
   const done = counts['terminado'];
-  const archived = counts['archivado'];
   return /*#__PURE__*/React.createElement("div", {
     className: "dash",
     "data-screen-label": "02 Dashboard"
@@ -654,7 +674,7 @@ function Dashboard({
     className: "l"
   }, "Total proyectos"), /*#__PURE__*/React.createElement("span", {
     className: "v"
-  }, data.proyectos.length)), /*#__PURE__*/React.createElement("div", {
+  }, visibles.length)), /*#__PURE__*/React.createElement("div", {
     className: "kpi accent"
   }, /*#__PURE__*/React.createElement("span", {
     className: "l"
@@ -666,13 +686,7 @@ function Dashboard({
     className: "l"
   }, "Terminados"), /*#__PURE__*/React.createElement("span", {
     className: "v"
-  }, done)), /*#__PURE__*/React.createElement("div", {
-    className: "kpi"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "l"
-  }, "Archivados"), /*#__PURE__*/React.createElement("span", {
-    className: "v"
-  }, archived))), /*#__PURE__*/React.createElement("div", {
+  }, done))), /*#__PURE__*/React.createElement("div", {
     className: "tabs"
   }, TABS.map(t => /*#__PURE__*/React.createElement("button", {
     key: t.key,
@@ -878,7 +892,8 @@ function ProjectDetail({
   data,
   project,
   onOpenFolder,
-  onOpenModal
+  onOpenModal,
+  onBack
 }) {
   const counts = {};
   project.carpetas.forEach(c => {
@@ -887,7 +902,10 @@ function ProjectDetail({
   return /*#__PURE__*/React.createElement("div", {
     className: "detail",
     "data-screen-label": `03 Detalle ${project.codigo}`
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(BackBar, {
+    label: "Volver a mis proyectos",
+    onBack: onBack
+  }), /*#__PURE__*/React.createElement("div", {
     className: "detail-head"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -1118,8 +1136,18 @@ function FolderView({
   const docs = project.docs[folderKey] || [];
   const [active, setActive] = useState(docs[0] || null);
   const [downloaded, setDownloaded] = useState({});
+  const [selected, setSelected] = useState([]); // docIds marcados
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkErr, setBulkErr] = useState('');
+
+  // Sólo los documentos con docId se pueden empaquetar en un ZIP.
+  const descargables = useMemo(() => docs.filter(d => d.docId), [docs]);
+
+  // Al cambiar de carpeta/proyecto se reinicia la selección y el documento activo.
   useEffect(() => {
     setActive(docs[0] || null);
+    setSelected([]);
+    setBulkErr('');
   }, [folderKey, project.id]);
   const handleDownload = doc => {
     setDownloaded(d => ({
@@ -1131,12 +1159,60 @@ function FolderView({
       [doc.name]: false
     })), 2200);
   };
+  const toggle = docId => {
+    setBulkErr('');
+    setSelected(prev => prev.includes(docId) ? prev.filter(x => x !== docId) : [...prev, docId]);
+  };
+  const allSelected = descargables.length > 0 && selected.length === descargables.length;
+  const toggleAll = () => {
+    setBulkErr('');
+    setSelected(allSelected ? [] : descargables.map(d => d.docId));
+  };
+
+  /* Pide al backend un ZIP con los documentos indicados y lo entrega al
+     navegador. Se usa fetch (en vez de navegar al link) para poder mostrar el
+     error sin sacar al usuario de la pantalla. */
+  const descargarZip = async lista => {
+    if (!lista.length || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkErr('');
+    let url = '';
+    try {
+      const qs = new URLSearchParams({
+        ids: lista.map(d => d.docId).join(','),
+        nombre: project.codigo + ' ' + folder.label
+      });
+      const r = await fetch('/api/docs/zip?' + qs.toString());
+      if (!r.ok) {
+        const info = await r.json().catch(() => ({}));
+        setBulkErr(info.error || 'No se pudo preparar la descarga.');
+        return;
+      }
+      const blob = await r.blob();
+      url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (project.codigo + ' ' + folder.label + '.zip').replace(/[\\/:*?"<>|]/g, '_');
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      setBulkErr('No se pudo preparar la descarga.');
+    } finally {
+      if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setBulkBusy(false);
+    }
+  };
+  const seleccionados = descargables.filter(d => selected.includes(d.docId));
   return /*#__PURE__*/React.createElement("div", {
     className: "folder-view",
-    "data-screen-label": `04 ${folder.label}`
+    "data-screen-label": '04 ' + folder.label
   }, /*#__PURE__*/React.createElement("div", {
     className: 'folder-list cat-' + folder.cat
-  }, /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement(BackBar, {
+    label: "Volver al proyecto",
+    onBack: onBack
+  }), /*#__PURE__*/React.createElement("div", {
     className: "folder-header"
   }, /*#__PURE__*/React.createElement("div", {
     className: "icon-wrap"
@@ -1157,13 +1233,57 @@ function FolderView({
     height: "22"
   })), /*#__PURE__*/React.createElement("div", {
     className: "h"
-  }, "Carpeta vac\xEDa"), /*#__PURE__*/React.createElement("div", null, "Los documentos se cargan al cerrar la etapa correspondiente.")) : /*#__PURE__*/React.createElement("div", {
+  }, "Carpeta vac\xEDa"), /*#__PURE__*/React.createElement("div", null, "Los documentos se cargan al cerrar la etapa correspondiente.")) : /*#__PURE__*/React.createElement(React.Fragment, null, descargables.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "doc-toolbar"
+  }, /*#__PURE__*/React.createElement("label", {
+    className: "sel-all"
+  }, /*#__PURE__*/React.createElement("input", {
+    type: "checkbox",
+    checked: allSelected,
+    ref: el => {
+      if (el) el.indeterminate = selected.length > 0 && !allSelected;
+    },
+    onChange: toggleAll
+  }), /*#__PURE__*/React.createElement("span", null, selected.length > 0 ? selected.length + ' de ' + descargables.length + ' seleccionados' : 'Seleccionar todos')), /*#__PURE__*/React.createElement("div", {
+    className: "acts"
+  }, /*#__PURE__*/React.createElement("button", {
+    className: "btn secondary sm",
+    onClick: () => descargarZip(seleccionados),
+    disabled: bulkBusy || seleccionados.length === 0,
+    title: "Descargar los documentos seleccionados en un ZIP"
+  }, /*#__PURE__*/React.createElement(Ico.download, {
+    width: "13",
+    height: "13"
+  }), "Selecci\xF3n", seleccionados.length ? ' (' + seleccionados.length + ')' : ''), /*#__PURE__*/React.createElement("button", {
+    className: "btn primary sm",
+    onClick: () => descargarZip(descargables),
+    disabled: bulkBusy,
+    title: "Descargar todos los documentos de esta carpeta en un ZIP"
+  }, /*#__PURE__*/React.createElement(Ico.download, {
+    width: "13",
+    height: "13"
+  }), "Descargar todos")), bulkBusy && /*#__PURE__*/React.createElement("div", {
+    className: "state"
+  }, "Preparando ZIP\u2026"), bulkErr && /*#__PURE__*/React.createElement("div", {
+    className: "state err"
+  }, bulkErr)), /*#__PURE__*/React.createElement("div", {
     className: "doc-list"
   }, docs.map((d, i) => {
     const isActive = active && active.name === d.name;
-    return /*#__PURE__*/React.createElement("button", {
+    const isSel = !!d.docId && selected.includes(d.docId);
+    return /*#__PURE__*/React.createElement("div", {
       key: i,
-      className: 'doc-row' + (isActive ? ' active' : ''),
+      className: 'doc-row' + (isActive ? ' active' : '') + (isSel ? ' selected' : '')
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      className: "doc-check",
+      checked: isSel,
+      disabled: !d.docId,
+      onChange: () => d.docId && toggle(d.docId),
+      title: d.docId ? 'Seleccionar para descarga múltiple' : 'No disponible',
+      "aria-label": 'Seleccionar ' + d.name
+    }), /*#__PURE__*/React.createElement("button", {
+      className: "doc-open",
       onClick: () => setActive(d)
     }, /*#__PURE__*/React.createElement("div", {
       className: "pdf-ic"
@@ -1173,15 +1293,14 @@ function FolderView({
       className: "name"
     }, d.name), /*#__PURE__*/React.createElement("div", {
       className: "meta"
-    }, d.size, " \xB7 ", d.date, d.tag ? ' · ' + d.tag : '')), /*#__PURE__*/React.createElement("div", {
+    }, d.size, " \xB7 ", d.date, d.tag ? ' · ' + d.tag : ''))), /*#__PURE__*/React.createElement("div", {
       className: "act"
     }, /*#__PURE__*/React.createElement("a", {
       className: "icon-btn",
       href: d.path,
       target: "_blank",
       rel: "noopener",
-      title: "Abrir en pesta\xF1a nueva",
-      onClick: e => e.stopPropagation()
+      title: "Abrir en pesta\xF1a nueva"
     }, /*#__PURE__*/React.createElement(Ico.expand, {
       width: "15",
       height: "15"
@@ -1190,10 +1309,7 @@ function FolderView({
       href: d.path,
       download: d.name,
       title: "Descargar",
-      onClick: e => {
-        e.stopPropagation();
-        handleDownload(d);
-      }
+      onClick: () => handleDownload(d)
     }, downloaded[d.name] ? /*#__PURE__*/React.createElement(Ico.check, {
       width: "15",
       height: "15",
@@ -1204,7 +1320,7 @@ function FolderView({
       width: "15",
       height: "15"
     }))));
-  })), /*#__PURE__*/React.createElement("div", {
+  }))), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 12
     }
@@ -1828,7 +1944,10 @@ function App() {
     data: data,
     project: selectedProject,
     onOpenFolder: onOpenFolder,
-    onOpenModal: setModal
+    onOpenModal: setModal,
+    onBack: () => onNav({
+      view: 'dashboard'
+    })
   }), view === 'folder' && selectedProject && selectedFolder && /*#__PURE__*/React.createElement(FolderView, {
     data: data,
     project: selectedProject,

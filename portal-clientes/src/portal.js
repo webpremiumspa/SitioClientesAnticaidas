@@ -32,6 +32,7 @@ function docsPublicos(p, keys) {
       size: d.size,
       date: d.date,
       tag: d.tag,
+      docId: d.docId || null, // lo usa el frontend para la descarga múltiple (ZIP)
       path: d.docId ? `/api/doc/${encodeURIComponent(d.docId)}` : null,
     }));
   }

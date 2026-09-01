@@ -154,6 +154,7 @@ function App() {
           project={selectedProject}
           onOpenFolder={onOpenFolder}
           onOpenModal={setModal}
+          onBack={() => onNav({ view: 'dashboard' })}
         />
       )}
 

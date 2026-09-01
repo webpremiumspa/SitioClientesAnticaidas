@@ -2,11 +2,12 @@
    DASHBOARD — lista de proyectos, KPIs, ejecutivo, acciones rápidas
    ================================================================ */
 
+// Los proyectos archivados (PENDIENTE/CANCELADO) no se muestran en el portal:
+// no tienen pestaña, no cuentan en los KPI y se excluyen de la lista.
 const TABS = [
   { key: 'todos',         label: 'Todos' },
   { key: 'en-ejecucion',  label: 'En ejecución' },
   { key: 'terminado',     label: 'Terminados' },
-  { key: 'archivado',     label: 'Archivados' },
 ];
 
 function StatusPill({ estado, label }) {
@@ -73,22 +74,26 @@ function ProjectCard({ p, onOpen }) {
 function Dashboard({ data, onOpenProject, onOpenModal }) {
   const [tab, setTab] = useState('todos');
 
+  const visibles = useMemo(
+    () => data.proyectos.filter(p => p.estado !== 'archivado'),
+    [data]
+  );
+
   const counts = useMemo(() => {
-    const c = { todos: data.proyectos.length };
+    const c = { todos: visibles.length };
     for (const t of TABS.slice(1)) {
-      c[t.key] = data.proyectos.filter(p => p.estado === t.key).length;
+      c[t.key] = visibles.filter(p => p.estado === t.key).length;
     }
     return c;
-  }, [data]);
+  }, [visibles]);
 
   const list = useMemo(() => {
-    if (tab === 'todos') return data.proyectos;
-    return data.proyectos.filter(p => p.estado === tab);
-  }, [tab, data]);
+    if (tab === 'todos') return visibles;
+    return visibles.filter(p => p.estado === tab);
+  }, [tab, visibles]);
 
   const active = counts['en-ejecucion'];
   const done = counts['terminado'];
-  const archived = counts['archivado'];
 
   return (
     <div className="dash" data-screen-label="02 Dashboard">
@@ -111,7 +116,7 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
         <div className="kpis">
           <div className="kpi">
             <span className="l">Total proyectos</span>
-            <span className="v">{data.proyectos.length}</span>
+            <span className="v">{visibles.length}</span>
           </div>
           <div className="kpi accent">
             <span className="l">En ejecución</span>
@@ -120,10 +125,6 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
           <div className="kpi">
             <span className="l">Terminados</span>
             <span className="v">{done}</span>
-          </div>
-          <div className="kpi">
-            <span className="l">Archivados</span>
-            <span className="v">{archived}</span>
           </div>
         </div>
 

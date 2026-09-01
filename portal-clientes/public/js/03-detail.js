@@ -42,12 +42,14 @@ function folderIcon(cat) {
   return FOLDER_ICONS[cat] || FOLDER_ICONS.gen;
 }
 
-function ProjectDetail({ data, project, onOpenFolder, onOpenModal }) {
+function ProjectDetail({ data, project, onOpenFolder, onOpenModal, onBack }) {
   const counts = {};
   project.carpetas.forEach((c) => { counts[c.key] = (project.docs[c.key] || []).length; });
 
   return (
     <div className="detail" data-screen-label={`03 Detalle ${project.codigo}`}>
+      <BackBar label="Volver a mis proyectos" onBack={onBack} />
+
       <div className="detail-head">
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap' }}>
           <div style={{ flex: 1, minWidth: 280 }}>
@@ -196,17 +198,78 @@ function FolderView({ data, project, folderKey, onBack }) {
   const docs = project.docs[folderKey] || [];
   const [active, setActive] = useState(docs[0] || null);
   const [downloaded, setDownloaded] = useState({});
+  const [selected, setSelected] = useState([]);   // docIds marcados
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkErr, setBulkErr] = useState('');
 
-  useEffect(() => { setActive(docs[0] || null); }, [folderKey, project.id]);
+  // Sólo los documentos con docId se pueden empaquetar en un ZIP.
+  const descargables = useMemo(() => docs.filter(d => d.docId), [docs]);
+
+  // Al cambiar de carpeta/proyecto se reinicia la selección y el documento activo.
+  useEffect(() => {
+    setActive(docs[0] || null);
+    setSelected([]);
+    setBulkErr('');
+  }, [folderKey, project.id]);
 
   const handleDownload = (doc) => {
     setDownloaded(d => ({ ...d, [doc.name]: true }));
     setTimeout(() => setDownloaded(d => ({ ...d, [doc.name]: false })), 2200);
   };
 
+  const toggle = (docId) => {
+    setBulkErr('');
+    setSelected(prev => prev.includes(docId) ? prev.filter(x => x !== docId) : [...prev, docId]);
+  };
+
+  const allSelected = descargables.length > 0 && selected.length === descargables.length;
+  const toggleAll = () => {
+    setBulkErr('');
+    setSelected(allSelected ? [] : descargables.map(d => d.docId));
+  };
+
+  /* Pide al backend un ZIP con los documentos indicados y lo entrega al
+     navegador. Se usa fetch (en vez de navegar al link) para poder mostrar el
+     error sin sacar al usuario de la pantalla. */
+  const descargarZip = async (lista) => {
+    if (!lista.length || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkErr('');
+    let url = '';
+    try {
+      const qs = new URLSearchParams({
+        ids: lista.map(d => d.docId).join(','),
+        nombre: project.codigo + ' ' + folder.label,
+      });
+      const r = await fetch('/api/docs/zip?' + qs.toString());
+      if (!r.ok) {
+        const info = await r.json().catch(() => ({}));
+        setBulkErr(info.error || 'No se pudo preparar la descarga.');
+        return;
+      }
+      const blob = await r.blob();
+      url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = (project.codigo + ' ' + folder.label + '.zip').replace(/[\\/:*?"<>|]/g, '_');
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (e) {
+      setBulkErr('No se pudo preparar la descarga.');
+    } finally {
+      if (url) setTimeout(() => URL.revokeObjectURL(url), 60000);
+      setBulkBusy(false);
+    }
+  };
+
+  const seleccionados = descargables.filter(d => selected.includes(d.docId));
+
   return (
-    <div className="folder-view" data-screen-label={`04 ${folder.label}`}>
+    <div className="folder-view" data-screen-label={'04 ' + folder.label}>
       <div className={'folder-list cat-' + folder.cat}>
+        <BackBar label="Volver al proyecto" onBack={onBack} />
+
         <div className="folder-header">
           <div className="icon-wrap">{folderIcon(folder.cat)}</div>
           <div>
@@ -226,47 +289,98 @@ function FolderView({ data, project, folderKey, onBack }) {
             <div>Los documentos se cargan al cerrar la etapa correspondiente.</div>
           </div>
         ) : (
-          <div className="doc-list">
-            {docs.map((d, i) => {
-              const isActive = active && active.name === d.name;
-              return (
-                <button
-                  key={i}
-                  className={'doc-row' + (isActive ? ' active' : '')}
-                  onClick={() => setActive(d)}
-                >
-                  <div className="pdf-ic">PDF</div>
-                  <div className="body">
-                    <div className="name">{d.name}</div>
-                    <div className="meta">{d.size} · {d.date}{d.tag ? ' · ' + d.tag : ''}</div>
+          <>
+            {descargables.length > 0 && (
+              <div className="doc-toolbar">
+                <label className="sel-all">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={el => { if (el) el.indeterminate = selected.length > 0 && !allSelected; }}
+                    onChange={toggleAll}
+                  />
+                  <span>
+                    {selected.length > 0
+                      ? selected.length + ' de ' + descargables.length + ' seleccionados'
+                      : 'Seleccionar todos'}
+                  </span>
+                </label>
+
+                <div className="acts">
+                  <button
+                    className="btn secondary sm"
+                    onClick={() => descargarZip(seleccionados)}
+                    disabled={bulkBusy || seleccionados.length === 0}
+                    title="Descargar los documentos seleccionados en un ZIP"
+                  >
+                    <Ico.download width="13" height="13" />
+                    Selección{seleccionados.length ? ' (' + seleccionados.length + ')' : ''}
+                  </button>
+                  <button
+                    className="btn primary sm"
+                    onClick={() => descargarZip(descargables)}
+                    disabled={bulkBusy}
+                    title="Descargar todos los documentos de esta carpeta en un ZIP"
+                  >
+                    <Ico.download width="13" height="13" />
+                    Descargar todos
+                  </button>
+                </div>
+
+                {bulkBusy && <div className="state">Preparando ZIP…</div>}
+                {bulkErr && <div className="state err">{bulkErr}</div>}
+              </div>
+            )}
+
+            <div className="doc-list">
+              {docs.map((d, i) => {
+                const isActive = active && active.name === d.name;
+                const isSel = !!d.docId && selected.includes(d.docId);
+                return (
+                  <div key={i} className={'doc-row' + (isActive ? ' active' : '') + (isSel ? ' selected' : '')}>
+                    <input
+                      type="checkbox"
+                      className="doc-check"
+                      checked={isSel}
+                      disabled={!d.docId}
+                      onChange={() => d.docId && toggle(d.docId)}
+                      title={d.docId ? 'Seleccionar para descarga múltiple' : 'No disponible'}
+                      aria-label={'Seleccionar ' + d.name}
+                    />
+                    <button className="doc-open" onClick={() => setActive(d)}>
+                      <div className="pdf-ic">PDF</div>
+                      <div className="body">
+                        <div className="name">{d.name}</div>
+                        <div className="meta">{d.size} · {d.date}{d.tag ? ' · ' + d.tag : ''}</div>
+                      </div>
+                    </button>
+                    <div className="act">
+                      <a
+                        className="icon-btn"
+                        href={d.path}
+                        target="_blank"
+                        rel="noopener"
+                        title="Abrir en pestaña nueva"
+                      >
+                        <Ico.expand width="15" height="15" />
+                      </a>
+                      <a
+                        className="icon-btn"
+                        href={d.path}
+                        download={d.name}
+                        title="Descargar"
+                        onClick={() => handleDownload(d)}
+                      >
+                        {downloaded[d.name]
+                          ? <Ico.check width="15" height="15" style={{ color: 'var(--accent)' }} />
+                          : <Ico.download width="15" height="15" />}
+                      </a>
+                    </div>
                   </div>
-                  <div className="act">
-                    <a
-                      className="icon-btn"
-                      href={d.path}
-                      target="_blank"
-                      rel="noopener"
-                      title="Abrir en pestaña nueva"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Ico.expand width="15" height="15" />
-                    </a>
-                    <a
-                      className="icon-btn"
-                      href={d.path}
-                      download={d.name}
-                      title="Descargar"
-                      onClick={(e) => { e.stopPropagation(); handleDownload(d); }}
-                    >
-                      {downloaded[d.name]
-                        ? <Ico.check width="15" height="15" style={{ color: 'var(--accent)' }} />
-                        : <Ico.download width="15" height="15" />}
-                    </a>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
 
         <div style={{ marginTop: 12 }}>

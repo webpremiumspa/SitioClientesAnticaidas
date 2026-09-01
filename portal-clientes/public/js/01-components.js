@@ -146,6 +146,21 @@ function CertChip({ vigencia, style }) {
   );
 }
 
+/* ---------- Barra de navegación "volver" ----------
+   Se muestra arriba de cada pantalla interior (detalle y carpeta) para que
+   siempre haya una salida visible hacia la pantalla anterior. */
+function BackBar({ label, onBack, children }) {
+  return (
+    <div className="back-bar">
+      <button type="button" className="btn ghost sm back-btn" onClick={onBack}>
+        <Ico.chevL width="15" height="15" />
+        {label}
+      </button>
+      {children}
+    </div>
+  );
+}
+
 /* ===========================================================
    LOGIN
    =========================================================== */
@@ -323,5 +338,6 @@ function Login({ onLogin }) {
 window.Login = Login;
 window.Ico = Ico;
 window.Logo = Logo;
+window.BackBar = BackBar;
 window.formatRut = formatRut;
 window.cleanRut = cleanRut;
