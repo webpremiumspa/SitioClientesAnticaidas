@@ -90,8 +90,14 @@ const config = {
     cargo: process.env.EJECUTIVO_CARGO || 'Ejecutivo de Cuenta · Jefe de Operaciones',
     email: process.env.EJECUTIVO_EMAIL || 'ccofre@anticaidas.cl',
     telefono: process.env.EJECUTIVO_TELEFONO || '+56 2 2226 7461',
-    movil: process.env.EJECUTIVO_MOVIL || '+56 9 7642 1108',
   },
+
+  // Móvil de contacto que muestra el portal (fila MÓVIL del modal y botón
+  // "Llamar"), independiente de quién sea el ejecutivo asignado. SIN fallback
+  // hardcodeado a propósito: si no está definido, el portal oculta el móvil y
+  // el botón en vez de exponer un número personal. EJECUTIVO_MOVIL se acepta
+  // como alias antiguo para no romper despliegues existentes.
+  contactoMovil: String(process.env.CONTACTO_MOVIL || process.env.EJECUTIVO_MOVIL || '').trim(),
 
   syncIntervalMin: int(process.env.SYNC_INTERVAL_MIN, 10),
   otpTtlMin: int(process.env.OTP_TTL_MIN, 10),

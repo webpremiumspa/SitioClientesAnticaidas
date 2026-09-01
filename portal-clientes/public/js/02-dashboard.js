@@ -214,10 +214,12 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
               <Ico.mail width="14" height="14" />
               Contactar
             </button>
-            <a className="btn accent sm" href={'tel:' + data.ejecutivo.movil.replace(/\s/g, '')}>
-              <Ico.phone width="14" height="14" />
-              Llamar
-            </a>
+            {data.ejecutivo.movil && (
+              <a className="btn accent sm" href={'tel:' + data.ejecutivo.movil.replace(/\s/g, '')}>
+                <Ico.phone width="14" height="14" />
+                Llamar
+              </a>
+            )}
           </div>
         </div>
 

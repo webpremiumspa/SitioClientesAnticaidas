@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.2.0";
-window.__APP_BUILD__ = "36f59805";
+window.__APP_VERSION__ = "1.2.1";
+window.__APP_BUILD__ = "4834b2a4";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -799,7 +799,7 @@ function Dashboard({
   }, /*#__PURE__*/React.createElement(Ico.mail, {
     width: "14",
     height: "14"
-  }), "Contactar"), /*#__PURE__*/React.createElement("a", {
+  }), "Contactar"), data.ejecutivo.movil && /*#__PURE__*/React.createElement("a", {
     className: "btn accent sm",
     href: 'tel:' + data.ejecutivo.movil.replace(/\s/g, '')
   }, /*#__PURE__*/React.createElement(Ico.phone, {
@@ -1743,7 +1743,7 @@ function ContactoModal({
     l: 'Oficina',
     v: e.telefono,
     k: 'ofi'
-  }].map(c => /*#__PURE__*/React.createElement("div", {
+  }].filter(c => c.v).map(c => /*#__PURE__*/React.createElement("div", {
     className: "contact-row",
     key: c.k
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {

@@ -265,7 +265,7 @@ function ContactoModal({ data, onClose }) {
           { l: 'Correo', v: e.email,    k: 'mail' },
           { l: 'Móvil',  v: e.movil,    k: 'mov' },
           { l: 'Oficina',v: e.telefono, k: 'ofi' },
-        ].map(c => (
+        ].filter(c => c.v).map(c => (
           <div className="contact-row" key={c.k}>
             <div>
               <div className="l">{c.l}</div>

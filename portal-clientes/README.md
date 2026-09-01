@@ -103,6 +103,17 @@ Para comprobar qué build está sirviendo el servidor:
 Si el pie sigue mostrando el build anterior, lo que quedó cacheado es
 `index.html` (Apache/Cloudflare): purga esa URL en Cloudflare.
 
+### Móvil de contacto
+
+El móvil que muestra el portal (fila `MÓVIL` del modal de contacto y botón
+`Llamar` del dashboard) sale de **`CONTACTO_MOVIL`**, no del ejecutivo: se
+muestra siempre ese número, sea quien sea el ejecutivo configurado en
+`EJECUTIVO_*`. Si la variable no está definida, el portal **oculta** el móvil y
+el botón `Llamar` en vez de caer a un número escrito en el código.
+
+`EJECUTIVO_MOVIL` sigue funcionando como alias antiguo (tiene menor prioridad),
+para no romper el despliegue actual mientras no se defina `CONTACTO_MOVIL`.
+
 ### Cuidado con el deploy de carpetas
 
 `.cpanel.yml` **borra** `css/`, `js/`, `vendor/`, `assets/`, `src/`, `scripts/` y

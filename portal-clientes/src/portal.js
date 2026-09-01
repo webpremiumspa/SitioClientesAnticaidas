@@ -17,7 +17,7 @@ function ejecutivo() {
     cargo: config.ejecutivo.cargo,
     email: config.ejecutivo.email,
     telefono: config.ejecutivo.telefono,
-    movil: config.ejecutivo.movil,
+    movil: config.contactoMovil, // fijo por configuración, no es el del ejecutivo
     iniciales: iniciales(config.ejecutivo.nombre),
   };
 }
