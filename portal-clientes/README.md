@@ -103,6 +103,19 @@ Para comprobar qué build está sirviendo el servidor:
 Si el pie sigue mostrando el build anterior, lo que quedó cacheado es
 `index.html` (Apache/Cloudflare): purga esa URL en Cloudflare.
 
+### Cuidado con el deploy de carpetas
+
+`.cpanel.yml` **borra** `css/`, `js/`, `vendor/`, `assets/`, `src/`, `scripts/` y
+`public/` en el docroot antes de copiarlas. Copiar encima de un directorio que ya
+existía no refrescaba su contenido en este servidor: durante semanas se sirvió
+`css/portal.css` del primer deploy mientras `index.html` y `app.bundle.js` (que
+son archivos sueltos de la raíz) sí se actualizaban. Si agregas una carpeta
+nueva dentro de `public/`, añádela también a la línea de `rm -rf`.
+
+La última tarea hace `touch tmp/restart.txt`, que es como Passenger recarga la
+app: sin eso el backend sigue ejecutando el código anterior aunque los archivos
+en disco sean nuevos.
+
 ## Estructura
 
 ```

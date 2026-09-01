@@ -5,7 +5,29 @@ deployment:
     # van tanto el backend (Passenger corre app.js) como el frontend estático.
     - export DEPLOYPATH=/home/somitalc/clientes.anticaidas.cl
     - /bin/mkdir -p "$DEPLOYPATH"
+
+    # IMPORTANTE: cada carpeta se BORRA antes de copiarla. Copiar sobre un
+    # directorio que ya existe no refrescaba su contenido en este servidor: por
+    # eso css/, js/, vendor/ y assets/ se quedaron congelados en la versión del
+    # primer deploy (portal.css servía aún el archivo del 17-07) mientras los
+    # archivos sueltos de la raíz (index.html, app.bundle.js) sí se actualizaban.
+
     # Backend (código + dependencias)
-    - /bin/cp -R portal-clientes/app.js portal-clientes/package.json portal-clientes/package-lock.json portal-clientes/src portal-clientes/scripts portal-clientes/node_modules "$DEPLOYPATH/"
+    - /bin/rm -rf "$DEPLOYPATH/src" "$DEPLOYPATH/scripts"
+    - /bin/cp -R portal-clientes/app.js portal-clientes/package.json portal-clientes/package-lock.json portal-clientes/src portal-clientes/scripts "$DEPLOYPATH/"
+    # node_modules no se borra (copiarlo entero es lento). Si algún día cambian
+    # las dependencias, hay que borrarlo aquí igual que las carpetas de arriba.
+    - /bin/cp -R portal-clientes/node_modules "$DEPLOYPATH/"
+
     # Frontend estático en la RAÍZ del docroot (Apache lo sirve en "/")
+    - /bin/rm -rf "$DEPLOYPATH/css" "$DEPLOYPATH/js" "$DEPLOYPATH/vendor" "$DEPLOYPATH/assets"
     - /bin/cp -R portal-clientes/public/. "$DEPLOYPATH/"
+
+    # Copia en public/: es lo que sirve Express (estáticos + fallback SPA).
+    - /bin/rm -rf "$DEPLOYPATH/public"
+    - /bin/cp -R portal-clientes/public "$DEPLOYPATH/public"
+
+    # Passenger recarga la app al ver tmp/restart.txt: evita tener que reiniciar
+    # a mano desde cPanel (si no, el backend sigue corriendo el código anterior).
+    - /bin/mkdir -p "$DEPLOYPATH/tmp"
+    - /bin/touch "$DEPLOYPATH/tmp/restart.txt"
