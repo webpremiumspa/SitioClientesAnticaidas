@@ -106,26 +106,28 @@ function portalData(rutNorm) {
     },
     ejecutivo: ejecutivo(),
     proyectos: proyectos.map((p) => proyectoPublico(p, meta, hoy)),
-    proximaInspeccion: proximaInspeccion(proyectos, hoy),
+    proximasInspecciones: proximasInspecciones(proyectos, hoy),
   };
 }
 
 /**
- * Inspección/mantención futura más próxima del cliente (según PROX MANTENCION).
- * Devuelve { proyecto, fecha (MM-YYYY) } o null si no hay ninguna futura.
+ * Una inspección por PROYECTO TERMINADO (según su PROX MANTENCION): cada
+ * proyecto tiene su propia fecha de mantención, así que no corresponde elegir
+ * una sola. Se ordenan por fecha ascendente, de modo que las ya vencidas
+ * (marcadas con `vencida`) quedan arriba, que es donde el cliente debe actuar.
+ * Los archivados quedan fuera: no se muestran en ninguna parte del portal.
  */
-function proximaInspeccion(proyectos, hoy) {
-  let mejor = null;
-  for (const p of proyectos) {
-    const iso = p.proxMantencionISO;
-    if (!iso || iso < hoy) continue; // sin fecha o ya vencida
-    if (!mejor || iso < mejor.iso) mejor = { iso, nombre: p.nombre };
-  }
-  if (!mejor) return null;
-  return {
-    proyecto: mejor.nombre,
-    fecha: `${mejor.iso.slice(5, 7)}-${mejor.iso.slice(0, 4)}`, // MM-YYYY
-  };
+function proximasInspecciones(proyectos, hoy) {
+  return proyectos
+    .filter((p) => p.estado === 'terminado' && p.proxMantencionISO)
+    .map((p) => ({
+      codigo: p.codigo,
+      proyecto: p.nombre,
+      iso: p.proxMantencionISO,
+      fecha: `${p.proxMantencionISO.slice(5, 7)}-${p.proxMantencionISO.slice(0, 4)}`, // MM-YYYY
+      vencida: p.proxMantencionISO < hoy,
+    }))
+    .sort((a, b) => a.iso.localeCompare(b.iso) || a.codigo.localeCompare(b.codigo));
 }
 
 /**

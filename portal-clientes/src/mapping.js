@@ -133,15 +133,26 @@ function armarDescripcion({ tipoSistema, extension, cantidadUsuarios, comuna, re
   return frase;
 }
 
-/** ISO de PROX MANTENCION del registro; fallback EOMONTH(FECHA RECEPCION,+12). */
-function calcProxMantencion(reg0) {
-  const directa = fechaFlexISO(pick(reg0, 'PROX MANTENCION', 'PROX_MANTENCION'));
-  if (directa) return directa;
-  const rec = usToISO(pick(reg0, 'FECHA RECEPCION', 'FECHA_RECEPCION'));
-  if (!rec) return null;
-  const d = new Date(rec + 'T00:00:00Z');
-  // EOMONTH(+12): último día del mismo mes, un año después.
-  return finDeMesISO(d.getUTCFullYear() + 1, d.getUTCMonth() + 1);
+/**
+ * ISO de PROX MANTENCION del proyecto. Todos los REGISTROS de un mismo CODIGO
+ * DE PROYECTO comparten la fecha, así que vale la primera NO VACÍA (el primer
+ * registro puede traerla en blanco). Si ninguno la trae, se calcula como
+ * EOMONTH(FECHA RECEPCION, +12).
+ */
+function calcProxMantencion(registros) {
+  const regs = registros || [];
+  for (const r of regs) {
+    const directa = fechaFlexISO(pick(r, 'PROX MANTENCION', 'PROX_MANTENCION'));
+    if (directa) return directa;
+  }
+  for (const r of regs) {
+    const rec = usToISO(pick(r, 'FECHA RECEPCION', 'FECHA_RECEPCION'));
+    if (!rec) continue;
+    const d = new Date(rec + 'T00:00:00Z');
+    // EOMONTH(+12): último día del mismo mes, un año después.
+    return finDeMesISO(d.getUTCFullYear() + 1, d.getUTCMonth() + 1);
+  }
+  return null;
 }
 
 function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}, finalOrden = 6) {
@@ -157,10 +168,9 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}, finalOrden
     idRegistro: pick(r, 'ID REGISTRO'),
   }));
 
-  // Fecha de próxima mantención (para vigencia de certificados). Todos los
-  // registros comparten la misma, se toma la del primero. Si la columna virtual
-  // no viene, se calcula como EOMONTH(FECHA RECEPCION, +12).
-  const proxMantencionISO = calcProxMantencion(reg0);
+  // Fecha de próxima mantención: alimenta la vigencia de certificados y la
+  // lista de próximas inspecciones del dashboard.
+  const proxMantencionISO = calcProxMantencion(registrosDelProyecto);
 
   // Extensión: suma de metros de los registros (si los hay).
   let metros = 0;

@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.1.1";
-window.__APP_BUILD__ = "92cb6b77";
+window.__APP_VERSION__ = "1.2.0";
+window.__APP_BUILD__ = "36f59805";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -656,6 +656,45 @@ function ProjectCard({
     height: "14"
   }))));
 }
+
+/* Cada proyecto terminado tiene su propia PROX MANTENCION, así que la tarjeta
+   lista una fila por proyecto (no una sola fecha). Las vencidas van primero,
+   marcadas en rojo, porque son las que exigen acción. */
+const INSP_VISIBLES = 4;
+function InspeccionesCard({
+  inspecciones
+}) {
+  const [verTodas, setVerTodas] = useState(false);
+  const lista = inspecciones || [];
+  if (lista.length === 0) return null;
+  const visibles = verTodas ? lista : lista.slice(0, INSP_VISIBLES);
+  const ocultas = lista.length - visibles.length;
+  const vencidas = lista.filter(i => i.vencida).length;
+  return /*#__PURE__*/React.createElement("div", {
+    className: "side-card"
+  }, /*#__PURE__*/React.createElement("h4", null, lista.length === 1 ? 'Próxima inspección' : 'Próximas inspecciones'), /*#__PURE__*/React.createElement("p", {
+    className: "sub"
+  }, vencidas > 0 ? `${vencidas} ${vencidas === 1 ? 'proyecto tiene' : 'proyectos tienen'} la inspección vencida.` : 'Mantén tus sistemas certificados al día.'), /*#__PURE__*/React.createElement("div", {
+    className: "insp-list"
+  }, visibles.map(i => /*#__PURE__*/React.createElement("div", {
+    key: i.codigo,
+    className: 'insp-row' + (i.vencida ? ' vencida' : '')
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "ic"
+  }, /*#__PURE__*/React.createElement(Ico.shield, {
+    width: "18",
+    height: "18"
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "body"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "n"
+  }, i.proyecto), /*#__PURE__*/React.createElement("div", {
+    className: "d"
+  }, i.vencida ? 'Vencida' : 'Inspección anual', " \xB7 ", i.fecha))))), (ocultas > 0 || verTodas) && /*#__PURE__*/React.createElement("button", {
+    className: "btn ghost sm insp-more",
+    onClick: () => setVerTodas(v => !v)
+  }, verTodas ? 'Ver menos' : `Ver todas (${lista.length})`));
+}
 function Dashboard({
   data,
   onOpenProject,
@@ -790,54 +829,12 @@ function Dashboard({
     className: "t"
   }, "Solicitar nuevo proyecto"), /*#__PURE__*/React.createElement("div", {
     className: "d"
-  }, "Cotiza una nueva l\xEDnea de vida o sistema antica\xEDdas."))), data.proximaInspeccion && /*#__PURE__*/React.createElement("div", {
-    className: "side-card"
-  }, /*#__PURE__*/React.createElement("h4", null, "Pr\xF3xima inspecci\xF3n"), /*#__PURE__*/React.createElement("p", {
-    className: "sub",
-    style: {
-      marginBottom: 12
-    }
-  }, "Mant\xE9n tu sistema certificado al d\xEDa."), /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '12px 14px',
-      background: 'var(--bg-paper-2)',
-      borderRadius: 10,
-      border: '1px solid var(--border-light)'
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      width: 40,
-      height: 40,
-      borderRadius: 8,
-      background: 'var(--accent-soft)',
-      color: 'var(--accent)',
-      display: 'grid',
-      placeItems: 'center'
-    }
-  }, /*#__PURE__*/React.createElement(Ico.shield, {
-    width: "18",
-    height: "18"
-  })), /*#__PURE__*/React.createElement("div", {
-    style: {
-      minWidth: 0
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 13,
-      fontWeight: 600
-    }
-  }, data.proximaInspeccion.proyecto), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'var(--ink-3)',
-      fontFamily: 'var(--font-mono)'
-    }
-  }, "Inspecci\xF3n anual \xB7 ", data.proximaInspeccion.fecha))))));
+  }, "Cotiza una nueva l\xEDnea de vida o sistema antica\xEDdas."))), /*#__PURE__*/React.createElement(InspeccionesCard, {
+    inspecciones: data.proximasInspecciones
+  })));
 }
 window.Dashboard = Dashboard;
+window.InspeccionesCard = InspeccionesCard;
 window.StatusPill = StatusPill;
 
 /* ===== 03-detail.js ===== */

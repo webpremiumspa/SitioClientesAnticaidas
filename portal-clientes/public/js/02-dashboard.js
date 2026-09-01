@@ -71,6 +71,50 @@ function ProjectCard({ p, onOpen }) {
   );
 }
 
+/* Cada proyecto terminado tiene su propia PROX MANTENCION, así que la tarjeta
+   lista una fila por proyecto (no una sola fecha). Las vencidas van primero,
+   marcadas en rojo, porque son las que exigen acción. */
+const INSP_VISIBLES = 4;
+
+function InspeccionesCard({ inspecciones }) {
+  const [verTodas, setVerTodas] = useState(false);
+  const lista = inspecciones || [];
+  if (lista.length === 0) return null;
+
+  const visibles = verTodas ? lista : lista.slice(0, INSP_VISIBLES);
+  const ocultas = lista.length - visibles.length;
+  const vencidas = lista.filter(i => i.vencida).length;
+
+  return (
+    <div className="side-card">
+      <h4>{lista.length === 1 ? 'Próxima inspección' : 'Próximas inspecciones'}</h4>
+      <p className="sub">
+        {vencidas > 0
+          ? `${vencidas} ${vencidas === 1 ? 'proyecto tiene' : 'proyectos tienen'} la inspección vencida.`
+          : 'Mantén tus sistemas certificados al día.'}
+      </p>
+
+      <div className="insp-list">
+        {visibles.map(i => (
+          <div key={i.codigo} className={'insp-row' + (i.vencida ? ' vencida' : '')}>
+            <div className="ic"><Ico.shield width="18" height="18" /></div>
+            <div className="body">
+              <div className="n">{i.proyecto}</div>
+              <div className="d">{i.vencida ? 'Vencida' : 'Inspección anual'} · {i.fecha}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(ocultas > 0 || verTodas) && (
+        <button className="btn ghost sm insp-more" onClick={() => setVerTodas(v => !v)}>
+          {verTodas ? 'Ver menos' : `Ver todas (${lista.length})`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function Dashboard({ data, onOpenProject, onOpenModal }) {
   const [tab, setTab] = useState('todos');
 
@@ -193,33 +237,12 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
           </div>
         </button>
 
-        {data.proximaInspeccion && (
-          <div className="side-card">
-            <h4>Próxima inspección</h4>
-            <p className="sub" style={{ marginBottom: 12 }}>Mantén tu sistema certificado al día.</p>
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-              background: 'var(--bg-paper-2)', borderRadius: 10, border: '1px solid var(--border-light)'
-            }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 8, background: 'var(--accent-soft)',
-                color: 'var(--accent)', display: 'grid', placeItems: 'center'
-              }}>
-                <Ico.shield width="18" height="18" />
-              </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{data.proximaInspeccion.proyecto}</div>
-                <div style={{ fontSize: 12, color: 'var(--ink-3)', fontFamily: 'var(--font-mono)' }}>
-                  Inspección anual · {data.proximaInspeccion.fecha}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <InspeccionesCard inspecciones={data.proximasInspecciones} />
       </aside>
     </div>
   );
 }
 
 window.Dashboard = Dashboard;
+window.InspeccionesCard = InspeccionesCard;
 window.StatusPill = StatusPill;
