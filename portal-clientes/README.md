@@ -103,6 +103,19 @@ Para comprobar qué build está sirviendo el servidor:
 Si el pie sigue mostrando el build anterior, lo que quedó cacheado es
 `index.html` (Apache/Cloudflare): purga esa URL en Cloudflare.
 
+### Formularios del portal
+
+"Auto-atención" y "Solicitar nuevo proyecto" envían a `POST /api/solicitud`,
+que manda un correo a **`EJECUTIVO_EMAIL`** con `Reply-To` del cliente (para
+responderle directo). El cliente NO va en copia.
+
+Los datos del cliente (razón social, RUT, solicitante, correo, teléfono) los
+toma el backend del **RUT en sesión**, nunca del body: así nadie puede
+suplantar a otro cliente en el correo. Límite de 6 envíos cada 15 min por IP.
+
+Si SMTP no está configurado el endpoint responde 503 y el modal muestra el
+error: nunca se declara enviada una solicitud que no salió.
+
 ### Móvil de contacto
 
 El móvil que muestra el portal (fila `MÓVIL` del modal de contacto y botón

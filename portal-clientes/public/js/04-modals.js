@@ -36,15 +36,43 @@ const AUTO_TOPICS = [
   'Otra',
 ];
 
+/* Envía un formulario del portal al ejecutivo. Devuelve { ok } o { error }.
+   Los datos del cliente no viajan en el body: el backend los toma de la sesión. */
+async function enviarSolicitud(tipo, campos) {
+  try {
+    const r = await fetch('/api/solicitud', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tipo, campos }),
+    });
+    if (r.ok) return { ok: true };
+    const info = await r.json().catch(() => ({}));
+    return { error: info.error || 'No se pudo enviar la solicitud.' };
+  } catch (e) {
+    return { error: 'No se pudo enviar la solicitud. Revisa tu conexión.' };
+  }
+}
+
 function AutoAtencionModal({ data, onClose }) {
   const [topic, setTopic] = useState('');
   const [proyecto, setProyecto] = useState('');
   const [desc, setDesc] = useState('');
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
-  const submit = () => {
-    if (!topic || desc.trim().length < 10) return;
-    setSent(true);
+  const submit = async () => {
+    if (!topic || desc.trim().length < 10 || busy) return;
+    setBusy(true);
+    setErr('');
+    const r = await enviarSolicitud('auto-atencion', {
+      tema: topic,
+      proyecto: proyecto,
+      descripcion: desc.trim(),
+    });
+    setBusy(false);
+    if (r.ok) setSent(true);
+    else setErr(r.error);
   };
 
   if (sent) {
@@ -84,10 +112,11 @@ function AutoAtencionModal({ data, onClose }) {
       onClose={onClose}
       footer={
         <>
+          {err && <span className="form-err">{err}</span>}
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn accent" onClick={submit} disabled={!topic || desc.trim().length < 10}>
-            Enviar al ejecutivo
-            <Ico.arrowR width="14" height="14" />
+          <button className="btn accent" onClick={submit} disabled={busy || !topic || desc.trim().length < 10}>
+            {busy ? 'Enviando…' : 'Enviar al ejecutivo'}
+            {!busy && <Ico.arrowR width="14" height="14" />}
           </button>
         </>
       }
@@ -138,9 +167,28 @@ function SolicitarModal({ data, onClose }) {
     nota: '',
   });
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
   const upd = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const valid = form.direccion.trim().length > 4 && form.extension.trim().length > 0;
+
+  const submit = async () => {
+    if (!valid || busy) return;
+    setBusy(true);
+    setErr('');
+    const r = await enviarSolicitud('nuevo-proyecto', {
+      tipo: form.tipo,
+      direccion: form.direccion.trim(),
+      extension: form.extension.trim(),
+      usuarios: form.usuarios,
+      plazo: form.plazo,
+      nota: form.nota.trim(),
+    });
+    setBusy(false);
+    if (r.ok) setSent(true);
+    else setErr(r.error);
+  };
 
   if (sent) {
     return (
@@ -168,10 +216,11 @@ function SolicitarModal({ data, onClose }) {
       onClose={onClose}
       footer={
         <>
+          {err && <span className="form-err">{err}</span>}
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
-          <button className="btn accent" onClick={() => setSent(true)} disabled={!valid}>
-            Enviar solicitud
-            <Ico.arrowR width="14" height="14" />
+          <button className="btn accent" onClick={submit} disabled={busy || !valid}>
+            {busy ? 'Enviando…' : 'Enviar solicitud'}
+            {!busy && <Ico.arrowR width="14" height="14" />}
           </button>
         </>
       }

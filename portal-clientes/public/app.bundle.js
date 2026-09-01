@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.2.1";
-window.__APP_BUILD__ = "4834b2a4";
+window.__APP_VERSION__ = "1.3.0";
+window.__APP_BUILD__ = "21cc8179";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -1462,6 +1462,34 @@ function Modal({
 
 /* ----- Auto-atención ----- */
 const AUTO_TOPICS = ['Inspección anual', 'Falla / componente dañado', 'Mantención preventiva', 'Ampliación de sistema', 'Capacitación de usuarios', 'Otra'];
+
+/* Envía un formulario del portal al ejecutivo. Devuelve { ok } o { error }.
+   Los datos del cliente no viajan en el body: el backend los toma de la sesión. */
+async function enviarSolicitud(tipo, campos) {
+  try {
+    const r = await fetch('/api/solicitud', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tipo,
+        campos
+      })
+    });
+    if (r.ok) return {
+      ok: true
+    };
+    const info = await r.json().catch(() => ({}));
+    return {
+      error: info.error || 'No se pudo enviar la solicitud.'
+    };
+  } catch (e) {
+    return {
+      error: 'No se pudo enviar la solicitud. Revisa tu conexión.'
+    };
+  }
+}
 function AutoAtencionModal({
   data,
   onClose
@@ -1470,9 +1498,19 @@ function AutoAtencionModal({
   const [proyecto, setProyecto] = useState('');
   const [desc, setDesc] = useState('');
   const [sent, setSent] = useState(false);
-  const submit = () => {
-    if (!topic || desc.trim().length < 10) return;
-    setSent(true);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+  const submit = async () => {
+    if (!topic || desc.trim().length < 10 || busy) return;
+    setBusy(true);
+    setErr('');
+    const r = await enviarSolicitud('auto-atencion', {
+      tema: topic,
+      proyecto: proyecto,
+      descripcion: desc.trim()
+    });
+    setBusy(false);
+    if (r.ok) setSent(true);else setErr(r.error);
   };
   if (sent) {
     return /*#__PURE__*/React.createElement(Modal, {
@@ -1521,14 +1559,16 @@ function AutoAtencionModal({
     title: "Auto-atenci\xF3n",
     sub: "Describe tu requerimiento y nuestro ejecutivo te contactar\xE1.",
     onClose: onClose,
-    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, err && /*#__PURE__*/React.createElement("span", {
+      className: "form-err"
+    }, err), /*#__PURE__*/React.createElement("button", {
       className: "btn ghost",
       onClick: onClose
     }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
       className: "btn accent",
       onClick: submit,
-      disabled: !topic || desc.trim().length < 10
-    }, "Enviar al ejecutivo", /*#__PURE__*/React.createElement(Ico.arrowR, {
+      disabled: busy || !topic || desc.trim().length < 10
+    }, busy ? 'Enviando…' : 'Enviar al ejecutivo', !busy && /*#__PURE__*/React.createElement(Ico.arrowR, {
       width: "14",
       height: "14"
     })))
@@ -1591,11 +1631,28 @@ function SolicitarModal({
     nota: ''
   });
   const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
   const upd = (k, v) => setForm(f => ({
     ...f,
     [k]: v
   }));
   const valid = form.direccion.trim().length > 4 && form.extension.trim().length > 0;
+  const submit = async () => {
+    if (!valid || busy) return;
+    setBusy(true);
+    setErr('');
+    const r = await enviarSolicitud('nuevo-proyecto', {
+      tipo: form.tipo,
+      direccion: form.direccion.trim(),
+      extension: form.extension.trim(),
+      usuarios: form.usuarios,
+      plazo: form.plazo,
+      nota: form.nota.trim()
+    });
+    setBusy(false);
+    if (r.ok) setSent(true);else setErr(r.error);
+  };
   if (sent) {
     return /*#__PURE__*/React.createElement(Modal, {
       title: "Solicitud de proyecto recibida",
@@ -1616,14 +1673,16 @@ function SolicitarModal({
     title: "Solicitar nuevo proyecto",
     sub: "Ind\xEDcanos lo b\xE1sico \u2014 nosotros levantamos el resto en visita t\xE9cnica.",
     onClose: onClose,
-    footer: /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("button", {
+    footer: /*#__PURE__*/React.createElement(React.Fragment, null, err && /*#__PURE__*/React.createElement("span", {
+      className: "form-err"
+    }, err), /*#__PURE__*/React.createElement("button", {
       className: "btn ghost",
       onClick: onClose
     }, "Cancelar"), /*#__PURE__*/React.createElement("button", {
       className: "btn accent",
-      onClick: () => setSent(true),
-      disabled: !valid
-    }, "Enviar solicitud", /*#__PURE__*/React.createElement(Ico.arrowR, {
+      onClick: submit,
+      disabled: busy || !valid
+    }, busy ? 'Enviando…' : 'Enviar solicitud', !busy && /*#__PURE__*/React.createElement(Ico.arrowR, {
       width: "14",
       height: "14"
     })))

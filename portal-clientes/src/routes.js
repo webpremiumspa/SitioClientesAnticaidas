@@ -9,6 +9,7 @@
  *   GET  /api/portal                               -> PORTAL_DATA del cliente
  *   GET  /api/doc/:docId                           -> descarga/stream de un PDF
  *   GET  /api/docs/zip?ids=a,b,c                   -> descarga varios PDF en un ZIP
+ *   POST /api/solicitud                            -> formularios del portal al ejecutivo
  *   GET  /api/health                               -> estado (mínimo)
  */
 
@@ -151,6 +152,80 @@ router.get('/docs/zip', requireAuth, async (req, res) => {
   } catch (e) {
     console.error('[docs/zip]', e.message);
     res.status(502).json({ error: 'No se pudieron obtener los documentos' });
+  }
+});
+
+/* ===================== Solicitudes del portal =====================
+   Los formularios "Auto-atención" y "Solicitar nuevo proyecto" envían aquí.
+   El correo va a EJECUTIVO_EMAIL, con Reply-To del cliente autenticado.
+   Los datos del cliente NO se toman del body: se leen del RUT en sesión, para
+   que nadie pueda suplantar a otro cliente en el correo. */
+
+// 6 solicitudes cada 15 min por IP: suficiente para uso normal, corta el abuso.
+const solicitudLimiter = rateLimit({ prefix: 'sol-form', windowMs: 15 * 60 * 1000, max: 6 });
+
+const TIPOS_SOLICITUD = {
+  'auto-atencion': {
+    titulo: 'Auto-atención',
+    campos: [
+      ['tema', 'Tema', 120, true],
+      ['proyecto', 'Proyecto relacionado', 200, false],
+      ['descripcion', 'Descripción', 4000, true],
+    ],
+  },
+  'nuevo-proyecto': {
+    titulo: 'Solicitud de nuevo proyecto',
+    campos: [
+      ['tipo', 'Tipo de sistema', 80, true],
+      ['direccion', 'Dirección de la instalación', 300, true],
+      ['extension', 'Extensión aprox. (m)', 40, true],
+      ['usuarios', 'Usuarios simultáneos', 20, false],
+      ['plazo', 'Plazo deseado', 80, false],
+      ['nota', 'Notas adicionales', 4000, false],
+    ],
+  },
+};
+
+/** Normaliza un valor del formulario: string, sin control chars, recortado. */
+function limpiar(v, max) {
+  return String(v == null ? '' : v)
+    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/g, '')
+    .trim()
+    .slice(0, max);
+}
+
+router.post('/solicitud', requireAuth, solicitudLimiter, async (req, res) => {
+  const body = req.body || {};
+  const def = TIPOS_SOLICITUD[String(body.tipo || '')];
+  if (!def) return res.status(400).json({ error: 'Tipo de solicitud inválido' });
+
+  // Anidados a propósito: el formulario de proyecto tiene su propio campo
+  // "tipo" (tipo de sistema) y en un objeto plano pisaría al de arriba.
+  const entrada = body.campos && typeof body.campos === 'object' ? body.campos : {};
+  const campos = [];
+  for (const [clave, etiqueta, max, obligatorio] of def.campos) {
+    const valor = limpiar(entrada[clave], max);
+    if (obligatorio && !valor) {
+      return res.status(400).json({ error: `Falta completar: ${etiqueta}` });
+    }
+    campos.push([etiqueta, valor]);
+  }
+
+  // El cliente sale de la sesión, nunca del body.
+  const data = portal.portalData(req.session.rut);
+  if (!data) return res.status(404).json({ error: 'Cliente sin proyectos' });
+
+  try {
+    const mailer = require('./mailer');
+    const r = await mailer.enviarSolicitud({ titulo: def.titulo, cliente: data.cliente, campos });
+    if (!r.sent) {
+      // Sin SMTP no hay forma de avisar al ejecutivo: no digas que se envió.
+      return res.status(503).json({ error: 'El envío de correo no está disponible en este momento.' });
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('[solicitud]', e.message);
+    res.status(502).json({ error: 'No se pudo enviar la solicitud. Intenta nuevamente.' });
   }
 });
 
