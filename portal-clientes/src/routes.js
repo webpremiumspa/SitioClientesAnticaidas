@@ -154,9 +154,14 @@ router.get('/docs/zip', requireAuth, async (req, res) => {
   }
 });
 
-// Estado mínimo (sin detalle de errores internos ni conteos).
+// Estado mínimo (sin detalle de errores internos ni conteos). La versión
+// permite verificar qué build quedó desplegada sin iniciar sesión.
 router.get('/health', (req, res) => {
-  res.json({ status: 'ok', updatedAt: sync.status().updatedAt });
+  res.json({
+    status: 'ok',
+    version: require('../package.json').version,
+    updatedAt: sync.status().updatedAt,
+  });
 });
 
 module.exports = router;

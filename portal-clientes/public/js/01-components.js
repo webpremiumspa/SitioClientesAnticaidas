@@ -146,6 +146,28 @@ function CertChip({ vigencia, style }) {
   );
 }
 
+/* ---------- Versión desplegada ----------
+   El sello lo inyecta scripts/build-frontend.js en el bundle; sirve para
+   confirmar de un vistazo qué build está sirviendo el servidor (y si
+   Cloudflare todavía entrega una copia antigua). */
+function appVersion() {
+  return {
+    v: window.__APP_VERSION__ || '?',
+    build: window.__APP_BUILD__ || '?',
+  };
+}
+
+/* ---------- Pie de página ---------- */
+function Footer() {
+  const { v, build } = appVersion();
+  return (
+    <footer className="app-foot">
+      <span>ANTICAIDAS SpA · Portal de Clientes</span>
+      <span className="ver">v{v} · build {build}</span>
+    </footer>
+  );
+}
+
 /* ---------- Barra de navegación "volver" ----------
    Se muestra arriba de cada pantalla interior (detalle y carpeta) para que
    siempre haya una salida visible hacia la pantalla anterior. */
@@ -249,7 +271,10 @@ function Login({ onLogin }) {
 
         <div className="login-foot">
           <div className="accent-bar"></div>
-          <div>ANTICAIDAS SpA · RUT 77.096.487-3</div>
+          <div>
+            ANTICAIDAS SpA · RUT 77.096.487-3
+            <span className="ver"> · v{appVersion().v} · build {appVersion().build}</span>
+          </div>
         </div>
       </div>
 
@@ -339,5 +364,6 @@ window.Login = Login;
 window.Ico = Ico;
 window.Logo = Logo;
 window.BackBar = BackBar;
+window.Footer = Footer;
 window.formatRut = formatRut;
 window.cleanRut = cleanRut;

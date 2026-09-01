@@ -1,5 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
+window.__APP_VERSION__ = "1.1.0";
+window.__APP_BUILD__ = "a3561c8a";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -298,6 +300,30 @@ function CertChip({
   }), vigencia === 'vigente' ? 'Certificados Vigentes' : 'Certificados Vencidos');
 }
 
+/* ---------- Versión desplegada ----------
+   El sello lo inyecta scripts/build-frontend.js en el bundle; sirve para
+   confirmar de un vistazo qué build está sirviendo el servidor (y si
+   Cloudflare todavía entrega una copia antigua). */
+function appVersion() {
+  return {
+    v: window.__APP_VERSION__ || '?',
+    build: window.__APP_BUILD__ || '?'
+  };
+}
+
+/* ---------- Pie de página ---------- */
+function Footer() {
+  const {
+    v,
+    build
+  } = appVersion();
+  return /*#__PURE__*/React.createElement("footer", {
+    className: "app-foot"
+  }, /*#__PURE__*/React.createElement("span", null, "ANTICAIDAS SpA \xB7 Portal de Clientes"), /*#__PURE__*/React.createElement("span", {
+    className: "ver"
+  }, "v", v, " \xB7 build ", build));
+}
+
 /* ---------- Barra de navegación "volver" ----------
    Se muestra arriba de cada pantalla interior (detalle y carpeta) para que
    siempre haya una salida visible hacia la pantalla anterior. */
@@ -432,7 +458,9 @@ function Login({
     className: "login-foot"
   }, /*#__PURE__*/React.createElement("div", {
     className: "accent-bar"
-  }), /*#__PURE__*/React.createElement("div", null, "ANTICAIDAS SpA \xB7 RUT 77.096.487-3"))), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("div", null, "ANTICAIDAS SpA \xB7 RUT 77.096.487-3", /*#__PURE__*/React.createElement("span", {
+    className: "ver"
+  }, " \xB7 v", appVersion().v, " \xB7 build ", appVersion().build)))), /*#__PURE__*/React.createElement("div", {
     className: "login-right"
   }, step === 'rut' ? /*#__PURE__*/React.createElement("form", {
     className: "login-card",
@@ -539,6 +567,7 @@ window.Login = Login;
 window.Ico = Ico;
 window.Logo = Logo;
 window.BackBar = BackBar;
+window.Footer = Footer;
 window.formatRut = formatRut;
 window.cleanRut = cleanRut;
 
@@ -1956,7 +1985,7 @@ function App() {
       setSelectedFolder(null);
       setView('project');
     }
-  }), modal === 'auto' && /*#__PURE__*/React.createElement(AutoAtencionModal, {
+  }), /*#__PURE__*/React.createElement(Footer, null), modal === 'auto' && /*#__PURE__*/React.createElement(AutoAtencionModal, {
     data: data,
     onClose: () => setModal(null)
   }), modal === 'solicitar' && /*#__PURE__*/React.createElement(SolicitarModal, {

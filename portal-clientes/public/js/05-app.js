@@ -167,6 +167,8 @@ function App() {
         />
       )}
 
+      <Footer />
+
       {modal === 'auto' && <AutoAtencionModal data={data} onClose={() => setModal(null)} />}
       {modal === 'solicitar' && <SolicitarModal data={data} onClose={() => setModal(null)} />}
       {modal === 'contacto' && <ContactoModal data={data} onClose={() => setModal(null)} />}

@@ -81,11 +81,27 @@ El frontend NO usa Babel-in-browser. El JSX de `public/js/*.js` se precompila
 a `public/app.bundle.js` (que es lo que carga `index.html`), lo que permite un
 CSP estricto (sin `unsafe-eval`) y mejora el rendimiento.
 
-**Cada vez que edites un archivo `public/js/*.js`, recompila:**
+**Cada vez que edites `public/js/*.js` o `public/css/portal.css`, recompila:**
 ```bash
 npm run build   # = node scripts/build-frontend.js
 ```
-Luego commit + deploy + **purga Cloudflare** (cachea el JS/HTML).
+Luego commit + deploy.
+
+### Versión y caché
+
+`npm run build` sella la build con la versión de `package.json` y un hash del
+contenido (JS + CSS), y reescribe `index.html` para que apunte a
+`app.bundle.js?v=<build>` y `css/portal.css?v=<build>`. Ese query string cambia
+solo cuando cambia el código, así que Cloudflare y el navegador piden los
+archivos nuevos sin necesidad de purgar.
+
+Para comprobar qué build está sirviendo el servidor:
+
+- **pie de página del portal** (y del login): `v1.1.0 · build a3561c8a`;
+- **`GET /api/health`**: devuelve `version` (backend).
+
+Si el pie sigue mostrando el build anterior, lo que quedó cacheado es
+`index.html` (Apache/Cloudflare): purga esa URL en Cloudflare.
 
 ## Estructura
 

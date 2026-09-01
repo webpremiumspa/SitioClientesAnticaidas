@@ -1264,6 +1264,27 @@ textarea:focus {
   color: var(--ink-2);
 }
 .empty-state .h { color: var(--ink); font-weight: 600; margin-bottom: 4px; }
+/* ========== PIE DE PÁGINA ========== */
+.app-foot {
+  margin: auto auto 0;          /* auto arriba: se pega al fondo del shell */
+  width: 100%;
+  max-width: 1320px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 32px 26px;
+  border-top: 1px solid var(--border-light);
+  color: var(--ink-4);
+  font-size: 12px;
+}
+.app-foot .ver,
+.login-foot .ver {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
 /* ========== BARRA "VOLVER" (pantallas interiores) ========== */
 .back-bar {
   display: flex;
