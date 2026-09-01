@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.1.0";
-window.__APP_BUILD__ = "a3561c8a";
+window.__APP_VERSION__ = "1.1.1";
+window.__APP_BUILD__ = "92cb6b77";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
