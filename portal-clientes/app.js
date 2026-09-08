@@ -11,6 +11,7 @@ const session = require('express-session');
 const config = require('./src/config');
 const routes = require('./src/routes');
 const sync = require('./src/sync');
+const { FileSessionStore } = require('./src/sessionstore');
 
 const app = express();
 app.set('trust proxy', 1); // detrás del proxy de cPanel/Passenger
@@ -52,6 +53,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(
   session({
     name: 'portal.sid',
+    // En disco, no en memoria: cPanel/LiteSpeed levanta varios procesos y con
+    // MemoryStore cada uno tenía sus propias sesiones (401 al azar).
+    store: new FileSessionStore({ ttlMs: 8 * 60 * 60 * 1000 }),
     secret: config.sessionSecret,
     resave: false,
     saveUninitialized: false,
@@ -75,13 +79,15 @@ app.get(/^(?!\/api\/).*/, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Arranca la sincronización (demo o real según configuración).
-sync.start();
+// Sincronización: en producción la dispara UN cron (scripts/sync-once.js), no
+// los procesos web. LiteSpeed levanta varios y cada uno recorrería el catálogo
+// completo por su cuenta. En local sigue corriendo en proceso.
+if (config.syncInProcess) sync.start();
 
 const port = config.port;
 app.listen(port, () => {
   console.log(
-    `Portal Anticaidas escuchando en :${port} — modo ${config.demoMode ? 'DEMO' : 'AppSheet'} (${config.env})`
+    `Portal Anticaidas escuchando en :${port} — modo ${config.demoMode ? 'DEMO' : 'AppSheet'} (${config.env}) — sync en proceso: ${config.syncInProcess ? 'sí' : 'no (cron)'}`
   );
 });
 

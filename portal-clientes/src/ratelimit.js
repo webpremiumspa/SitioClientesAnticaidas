@@ -1,18 +1,21 @@
 'use strict';
 
 /**
- * Rate limiter simple en memoria (ventana fija por clave). Suficiente para un
- * solo proceso, que es el caso de este portal. Evita fuerza bruta de OTP,
+ * Rate limiter simple (ventana fija por clave). Evita fuerza bruta de OTP,
  * bombardeo de correos y abuso general de los endpoints.
+ *
+ * Los contadores viven en el store compartido en disco (src/kv.js), NO en
+ * memoria: cPanel/LiteSpeed corre varios procesos y cada uno llevaba su propia
+ * cuenta desde cero, así que el límite real era N veces el configurado (con 3
+ * procesos, 12 solicitudes de código por IP se convertían en 36).
+ *
+ * Sólo se aplica a endpoints de baja frecuencia (login y formularios), así que
+ * el par de operaciones de disco por request no es un problema.
  */
 
-const buckets = new Map(); // key -> { count, reset }
+const kv = require('./kv');
 
-// Limpieza periódica de claves vencidas (evita fuga de memoria).
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, b] of buckets) if (now > b.reset) buckets.delete(k);
-}, 5 * 60 * 1000).unref?.();
+const NS = 'rl';
 
 /** IP real del cliente: prioriza el header de Cloudflare. */
 function clientIp(req) {
@@ -34,12 +37,20 @@ function rateLimit({ windowMs, max, prefix = '', keyFn }) {
     const extra = keyFn ? ':' + keyFn(req) : '';
     const key = `${prefix}:${clientIp(req)}${extra}`;
     const now = Date.now();
-    let b = buckets.get(key);
-    if (!b || now > b.reset) {
-      b = { count: 0, reset: now + windowMs };
-      buckets.set(key, b);
+
+    let b;
+    try {
+      b = kv.update(NS, key, windowMs, (cur) =>
+        !cur || now > cur.reset
+          ? { count: 1, reset: now + windowMs }
+          : { count: cur.count + 1, reset: cur.reset }
+      );
+    } catch (e) {
+      // Si el disco falla, no bloqueamos el portal entero por el limitador.
+      console.error('[ratelimit]', e.message);
+      return next();
     }
-    b.count += 1;
+
     if (b.count > max) {
       res.setHeader('Retry-After', String(Math.ceil((b.reset - now) / 1000)));
       return res.status(429).json({ error: 'Demasiadas solicitudes. Intenta más tarde.' });

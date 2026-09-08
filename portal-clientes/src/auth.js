@@ -7,19 +7,28 @@
  *      contacto de ese cliente. El email NO se expone al frontend (se enmascara).
  *   2) El cliente ingresa el código; si coincide y no venció, queda logueado.
  *
- * Los códigos viven en memoria con expiración. Para un portal chico es
- * suficiente; si se escala a varias instancias, mover a un store compartido.
+ * Los códigos viven en el store compartido en disco (src/kv.js), NO en memoria:
+ * los dos pasos son peticiones HTTP distintas y cPanel/LiteSpeed puede
+ * atenderlas con procesos distintos. Con un Map en memoria, el proceso que
+ * recibía el código no era necesariamente el que lo había generado, y el login
+ * fallaba de forma intermitente con "Solicita un código primero".
  */
 
 const config = require('./config');
 const store = require('./store');
+const kv = require('./kv');
 const mailer = require('./mailer');
 const { normalizeRut, sameRut, generarCodigo } = require('./util');
 
-// rutNorm -> { codigo, exp, email, intentos }
-const pendientes = new Map();
+// Namespace del KV. Clave: rutNorm (se hashea al escribir el archivo).
+// Valor: { codigo, exp, issuedAt, email, intentos }
+const NS = 'otp';
 
 const MAX_INTENTOS = 5;
+
+// El registro se guarda un rato MÁS que la vigencia del código para poder
+// responder "el código venció" en vez de "solicita un código primero".
+const GRACIA_MS = 5 * 60 * 1000;
 
 /** Enmascara un email: iacunaf@inacap.cl -> i***f@inacap.cl */
 function maskEmail(email) {
@@ -51,6 +60,11 @@ function destinoCodigo(rutNorm, emailCliente) {
 
 const RESEND_COOLDOWN_MS = 60 * 1000;
 
+/** TTL con que se guarda un registro OTP, a partir de su vencimiento. */
+function ttlDe(rec) {
+  return Math.max(1000, rec.exp - Date.now() + GRACIA_MS);
+}
+
 /**
  * Paso 1: solicitar código. Respuesta SIEMPRE uniforme (`{ ok: true }`), no
  * revela si el RUT existe ni el correo (anti-enumeración). Si el RUT existe y
@@ -62,18 +76,19 @@ async function solicitarCodigo(rutRaw) {
 
   const email = emailDeCliente(rut);
   if (email) {
-    const prev = pendientes.get(rut);
+    const prev = kv.get(NS, rut);
     // Cooldown: no reenvía si ya se emitió un código hace menos de 60s
     // (evita bombardeo de correo a un cliente).
     if (!prev || Date.now() - prev.issuedAt > RESEND_COOLDOWN_MS) {
       const codigo = generarCodigo(6);
-      pendientes.set(rut, {
+      const rec = {
         codigo,
         exp: Date.now() + config.otpTtlMin * 60 * 1000,
         issuedAt: Date.now(),
         email,
         intentos: 0,
-      });
+      };
+      kv.set(NS, rut, rec, ttlDe(rec));
       const destino = destinoCodigo(rut, email);
       try {
         await mailer.enviarCodigo(destino, codigo);
@@ -90,21 +105,22 @@ async function solicitarCodigo(rutRaw) {
  */
 function verificarCodigo(rutRaw, codigo) {
   const rut = normalizeRut(rutRaw);
-  const p = pendientes.get(rut);
+  const p = kv.get(NS, rut);
   if (!p) return { ok: false, error: 'Solicita un código primero' };
   if (Date.now() > p.exp) {
-    pendientes.delete(rut);
+    kv.del(NS, rut);
     return { ok: false, error: 'El código venció. Solicita uno nuevo.' };
   }
   p.intentos += 1;
   if (p.intentos > MAX_INTENTOS) {
-    pendientes.delete(rut);
+    kv.del(NS, rut);
     return { ok: false, error: 'Demasiados intentos. Solicita un código nuevo.' };
   }
   if (String(codigo).trim() !== p.codigo) {
+    kv.set(NS, rut, p, ttlDe(p)); // persiste el intento fallido
     return { ok: false, error: 'Código incorrecto' };
   }
-  pendientes.delete(rut);
+  kv.del(NS, rut);
   return { ok: true, rut };
 }
 

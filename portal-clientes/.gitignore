@@ -2,6 +2,13 @@
 # servidor (las dependencias son JS puro, sin binarios nativos). Ver README.
 .env
 data/*.json
+# Estado compartido entre procesos (sesiones, códigos OTP, rate limit) y el
+# lock del cron: son datos de clientes en curso, nunca se versionan.
+data/sess/
+data/otp/
+data/rl/
+data/*.lock
+data/*.tmp
 !data/.gitkeep
 npm-debug.log*
 .DS_Store

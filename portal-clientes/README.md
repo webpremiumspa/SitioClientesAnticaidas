@@ -11,14 +11,31 @@ en **cPanel con Node.js**.
 Navegador (React, Babel in-browser)
    │  fetch con cookie de sesión
    ▼
-Node/Express (este proyecto)  ── guarda TODAS las credenciales (env vars)
-   ├─ Sync periódico ──► AppSheet API (PROYECTOS + REGISTRO)  → store local JSON
-   └─ Proxy de PDFs  ──► Microsoft Graph (SharePoint)
+cPanel / LiteSpeed
+      │  (levanta VARIOS procesos de la app)
+   ┌──┴───────────┬───────────────┐
+   ▼              ▼               ▼
+ Node #1        Node #2         Node #3   ── guardan TODAS las credenciales
+   │              │               │          y sólo LEEN el store
+   └──────────────┴───────┬───────┘
+                          ▼
+                  data/portal.json  ◄── UN cron diario
+                          ▲              (scripts/sync-once.js)
+                          │                    │
+                  Proxy de PDFs                ├─► AppSheet (PROYECTOS + REGISTRO)
+                  ──► Microsoft Graph          └─► Microsoft Graph (SharePoint)
 ```
 
-- **El cliente nunca consulta AppSheet en vivo.** Un *sync* baja los datos cada
-  `SYNC_INTERVAL_MIN` minutos a `data/portal.json`; las peticiones se responden
-  desde ahí (instantáneo y resiliente a la lentitud/caídas de AppSheet).
+- **El cliente nunca consulta AppSheet en vivo.** Un *sync* baja el catálogo
+  completo a `data/portal.json` y las peticiones se responden desde ahí
+  (instantáneo y resiliente a la lentitud/caídas de AppSheet).
+- **El sync lo ejecuta un único cron, no los procesos web.** cPanel/LiteSpeed
+  levanta varios procesos de la app; si cada uno sincronizara por su cuenta se
+  multiplicarían por N las llamadas a AppSheet/Graph (y los 429 de Graph dejan
+  proyectos sin documentos). Ver *Sincronización* más abajo.
+- **Nada de estado en la memoria del proceso.** Sesiones, códigos OTP y
+  contadores de rate limit viven en disco (`src/kv.js`), porque la petición
+  siguiente de un mismo cliente puede caer en otro proceso.
 - **Login en dos pasos**: RUT → código de un solo uso enviado al email registrado
   del cliente → sesión con cookie httpOnly.
 - **Seguridad**: la Access Key de AppSheet debe ser de una app **de solo lectura**;
@@ -69,11 +86,69 @@ al docroot del subdominio: `/home/somitalc/clientes.anticaidas.cl`.
 
 Deploys posteriores: push → *Update from Remote* → *Deploy HEAD Commit* → *Restart*.
 
+## Sincronización (cron diario)
+
+El catálogo se refresca **una vez al día**, con un único cron. Los procesos web
+no sincronizan: sólo leen `data/portal.json`.
+
+**cPanel → Cron Jobs**, una vez al día (05:15 hora del servidor):
+
+```
+15 5 * * * /home/somitalc/nodevenv/clientes.anticaidas.cl/24/bin/node /home/somitalc/clientes.anticaidas.cl/scripts/sync-once.js >> /home/somitalc/logs/portal-sync.log 2>&1
+```
+
+⚠️ **Tiene que ser el `node` de `nodevenv`**, no el del sistema: ese wrapper es
+el que exporta las variables de entorno de la aplicación. Con el `node` del
+sistema no habría `APPSHEET_APP_ID`, la app entraría en modo demo y
+sobrescribiría el catálogo con datos de ejemplo. `sync-once.js` detecta ese
+caso y aborta con código 2 en vez de escribir, pero el cron igual no haría nada
+útil.
+
+Detalles del comportamiento:
+
+- **No se solapa**: usa un lock en `DATA_DIR/sync.lock`. Si una ejecución sigue
+  viva, la siguiente sale sin hacer nada (un lock de más de 2 h se considera
+  basura y se reclama).
+- **Prefiere no escribir antes que escribir mal.** Como ahora corre una vez al
+  día, un sync malo dejaría el portal degradado 24 h en vez de 10 min. Aborta
+  sin tocar `portal.json` si AppSheet devuelve 0 proyectos teniendo datos
+  previos, o si más del 25 % de los proyectos falla al listar sus documentos.
+- **Los procesos web se enteran solos**: `store.js` relee el archivo cuando
+  cambia su fecha de modificación (comprueba como mucho cada 5 s). No hace
+  falta reiniciar la aplicación.
+
+**Refresco manual** (por ejemplo tras cargar documentos nuevos en SharePoint),
+desde cPanel → Terminal:
+
+```bash
+/home/somitalc/nodevenv/clientes.anticaidas.cl/24/bin/node   /home/somitalc/clientes.anticaidas.cl/scripts/sync-once.js
+```
+
+En **desarrollo** no hace falta cron: con `NODE_ENV` distinto de `production`
+el proceso web sincroniza solo cada `SYNC_INTERVAL_MIN` minutos. Se fuerza con
+`SYNC_IN_PROCESS=true` / `false`.
+
 ## Variables de entorno
 
-Ver `.env.example`. Grupos: AppSheet (App ID + Access Key de la app read-only),
-Azure/Graph (`Sites.Selected`), SMTP (envío del código), ejecutivo (fijo por
-config), sync y `DEMO_MODE`.
+En producción se definen en **cPanel → Setup Node.js App → Environment
+variables** (no hay `.env` en el servidor). Grupos: AppSheet (App ID + Access
+Key de la app read-only), Azure/Graph (`Sites.Selected`), SMTP (envío del
+código), ejecutivo, sync y `DEMO_MODE`. Ver `.env.example` para la lista
+completa con comentarios.
+
+Las que controlan la sincronización:
+
+| Variable | Por defecto | Para qué |
+|---|---|---|
+| `SYNC_IN_PROCESS` | `false` si `NODE_ENV=production` | Si los procesos web sincronizan. **En producción debe ser `false`**: sincroniza el cron. |
+| `SYNC_INTERVAL_MIN` | `60` | Sólo si `SYNC_IN_PROCESS=true` (desarrollo). En producción manda el cron. |
+| `GRAPH_CONCURRENCY` | `3` | Peticiones simultáneas a Graph durante el sync. Bajarlo reduce los 429 que dejan proyectos sin documentos. |
+| `DATA_DIR` | `<app>/data` | Store local **y** estado compartido entre procesos (sesiones, OTP, rate limit). Debe estar fuera del docroot. |
+
+⚠️ cPanel escribe estas variables en `~/nodevenv/<app>/<ver>/bin/node` como
+líneas `export`. Un nombre vacío o un valor con espacios sin comillas rompe esa
+línea (`export: ... not a valid identifier` en `stderr.log`) y esa variable
+queda sin definir. Si tocas variables, revisa el log después de reiniciar.
 
 ## Frontend (build)
 
@@ -149,15 +224,19 @@ src/
   appsheet.js          cliente API AppSheet (Find, solo lectura)
   graph.js             Microsoft Graph: listar/stream certificados SharePoint
   mapping.js           PROYECTOS/REGISTRO -> estructura del portal
-  sync.js              sincronización periódica -> store local
-  store.js             caché JSON en disco (data/portal.json)
+  sync.js              sincronización -> store local (la dispara el cron)
+  store.js             caché JSON en disco (data/portal.json), recargable
+  kv.js                estado compartido entre procesos (sesiones/OTP/limits)
+  sessionstore.js      store de sesiones de express-session sobre kv.js
   auth.js              RUT + código OTP
   mailer.js            envío del código por SMTP
   portal.js            arma el PORTAL_DATA por RUT
   routes.js            /api/*
   demoData.js          datos de ejemplo (DEMO_MODE)
 public/                frontend React (index.html + js/ + css/ + vendor/)
+scripts/sync-once.js   sincronización única: es la que ejecuta el cron
 data/portal.json       store local (generado; no se versiona)
+data/sess|otp|rl/      estado compartido entre procesos (generado)
 ```
 
 ## Seguridad
@@ -190,6 +269,11 @@ Pendiente / a reforzar en el servidor (ver más abajo):
 3. Modo **Production** (requiere HTTPS al origen: Cloudflare SSL "Full").
 4. Verificar por HTTP que `data/portal.json`, `src/`, `scripts/`, `stderr.log`
    den **403/404** (no 200).
+5. `SYNC_IN_PROCESS=false` y **crear el cron diario** (ver *Sincronización*).
+   Sin el cron, los datos no se actualizan nunca.
+6. Revisar que ninguna variable de entorno de cPanel esté malformada:
+   `cat ~/nodevenv/clientes.anticaidas.cl/24/bin/node` no debe producir
+   `export: ... not a valid identifier` en `stderr.log`.
 
 ## Puntos a ajustar al integrar con datos reales
 

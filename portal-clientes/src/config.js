@@ -99,7 +99,19 @@ const config = {
   // como alias antiguo para no romper despliegues existentes.
   contactoMovil: String(process.env.CONTACTO_MOVIL || process.env.EJECUTIVO_MOVIL || '').trim(),
 
-  syncIntervalMin: int(process.env.SYNC_INTERVAL_MIN, 10),
+  // Sólo aplica al sync EN PROCESO (desarrollo). En producción la frecuencia
+  // la fija el cron de cPanel, no esta variable.
+  syncIntervalMin: int(process.env.SYNC_INTERVAL_MIN, 60),
+
+  // ¿Los procesos web ejecutan el sync? En producción NO: lo hace un único
+  // cron (scripts/sync-once.js). LiteSpeed levanta varios procesos y cada uno
+  // sincronizaría el catálogo completo por su cuenta, triplicando las llamadas
+  // a AppSheet/Graph. En local queda activo para no tener que montar un cron.
+  syncInProcess: bool(process.env.SYNC_IN_PROCESS, ENV !== 'production'),
+
+  // Peticiones simultáneas a Microsoft Graph durante el sync. Con el sync
+  // diario no hay prisa: bajo = menos 429 = menos proyectos sin documentos.
+  graphConcurrency: int(process.env.GRAPH_CONCURRENCY, 3),
   otpTtlMin: int(process.env.OTP_TTL_MIN, 10),
 
   // Override GLOBAL de pruebas: todos los códigos van a esta dirección. Se
