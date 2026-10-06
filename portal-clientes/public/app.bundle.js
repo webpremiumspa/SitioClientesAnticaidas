@@ -1,6 +1,6 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.6.0";
+window.__APP_VERSION__ = "1.6.1";
 window.__APP_BUILD__ = "4acf5b84";
 
 /* ===== 00-data.js ===== */

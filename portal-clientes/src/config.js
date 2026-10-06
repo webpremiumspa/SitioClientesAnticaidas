@@ -26,6 +26,14 @@ const config = {
   port: int(process.env.PORT, 3000),
   sessionSecret: process.env.SESSION_SECRET || 'dev-insecure-secret-change-me',
 
+  // Flag `secure` de la cookie de sesión. Separado de NODE_ENV a propósito:
+  // Express sólo emite una cookie secure si considera HTTPS la conexión, y eso
+  // lo deduce de X-Forwarded-Proto. Si el proxy no la manda bien, NADIE puede
+  // iniciar sesión (verificar responde ok, pero no hay cookie -> 401 -> vuelve
+  // al login). Con esto se puede desactivar sin perder HSTS ni el resto del
+  // modo producción, mientras se arregla el proxy.
+  cookieSecure: bool(process.env.COOKIE_SECURE, ENV === 'production'),
+
   // Directorio del store local. Por seguridad debe estar FUERA del docroot web
   // (si no, portal.json sería descargable). En cPanel: DATA_DIR=/home/USER/portal-data
   dataDir: process.env.DATA_DIR || path.join(__dirname, '..', 'data'),

@@ -1,6 +1,6 @@
 {
   "name": "portal-clientes-anticaidas",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Portal de Clientes Anticaidas — datos desde AppSheet + certificados desde SharePoint (Microsoft Graph)",
   "main": "app.js",
   "type": "commonjs",

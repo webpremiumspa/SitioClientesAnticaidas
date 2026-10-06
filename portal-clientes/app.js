@@ -14,7 +14,10 @@ const sync = require('./src/sync');
 const { FileSessionStore } = require('./src/sessionstore');
 
 const app = express();
-app.set('trust proxy', 1); // detrás del proxy de cPanel/Passenger
+// `true` y no `1`: hay dos saltos (Cloudflare y LiteSpeed). Con 1 se leía el
+// X-Forwarded-Proto del salto más cercano, que es http, y la cookie secure no
+// se emitía nunca.
+app.set('trust proxy', true);
 app.disable('x-powered-by');
 
 // Cabeceras de seguridad (aplican a respuestas servidas por Express: /api y
@@ -62,7 +65,7 @@ app.use(
     cookie: {
       httpOnly: true,
       sameSite: 'strict',
-      secure: config.env === 'production', // requiere HTTPS en prod
+      secure: config.cookieSecure, // COOKIE_SECURE; requiere HTTPS hasta el origen
       maxAge: 8 * 60 * 60 * 1000, // 8 horas
     },
   })
