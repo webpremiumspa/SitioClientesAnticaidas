@@ -55,6 +55,7 @@ function proyectoPublico(p, meta, hoy) {
     codigo: p.codigo,
     nombre: p.nombre,
     sub: p.sub,
+    descripcionProyecto: p.descripcionProyecto,
     direccion: p.direccion,
     comuna: p.comuna,
     region: p.region,

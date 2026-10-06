@@ -22,6 +22,16 @@ function StatusPill({ estado, label }) {
   );
 }
 
+/**
+ * "DD-MM-YYYY" -> "MM-YYYY". En la tarjeta del dashboard la entrega se muestra
+ * sólo como mes-año; la fecha completa sigue en la vista de detalle.
+ */
+function mesAnio(dmy) {
+  if (!dmy) return '';
+  const p = String(dmy).split('-');
+  return p.length === 3 ? `${p[1]}-${p[2]}` : String(dmy);
+}
+
 function ProjectCard({ p, onOpen }) {
   const totalDocs = Object.values(p.docs || {}).reduce((s, arr) => s + (arr ? arr.length : 0), 0);
 
@@ -33,22 +43,22 @@ function ProjectCard({ p, onOpen }) {
           <span className="code">{p.codigo}</span>
         </div>
         <h3>{p.nombre}</h3>
-        <div className="addr">{p.sub}</div>
+        {/* DESCRIPCION PROYECTO de AppSheet. Mientras esa columna esté vacía
+            (la mayoría de los proyectos antiguos) cae al tipo de sistema. */}
+        {(p.descripcionProyecto || p.sub) && (
+          <div className="addr">{p.descripcionProyecto || p.sub}</div>
+        )}
 
-        <div className="proj-meta">
-          <div>
-            <span className="l">Extensión</span>
-            <span className="v">{p.extension}</span>
+        {/* Sólo la entrega, como mes-año. Si el proyecto aún no tiene fecha de
+            finalización no se muestra el bloque, en vez de un dato en blanco. */}
+        {mesAnio(p.fechaEntrega) && (
+          <div className="proj-meta">
+            <div>
+              <span className="l">Entrega</span>
+              <span className="v">{mesAnio(p.fechaEntrega)}</span>
+            </div>
           </div>
-          <div>
-            <span className="l">{p.estado === 'en-ejecucion' ? 'Inicio' : 'Entrega'}</span>
-            <span className="v">{p.estado === 'en-ejecucion' ? p.fechaInicio : p.fechaEntrega}</span>
-          </div>
-          <div>
-            <span className="l">Diseño</span>
-            <span className="v">{p.diseno}</span>
-          </div>
-        </div>
+        )}
 
         {p.estado === 'en-ejecucion' && (
           <div className="progress accent">

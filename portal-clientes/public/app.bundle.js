@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.3.0";
-window.__APP_BUILD__ = "21cc8179";
+window.__APP_VERSION__ = "1.5.0";
+window.__APP_BUILD__ = "a08e7ee6";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -599,6 +599,16 @@ function StatusPill({
     className: "dot"
   }), label);
 }
+
+/**
+ * "DD-MM-YYYY" -> "MM-YYYY". En la tarjeta del dashboard la entrega se muestra
+ * sólo como mes-año; la fecha completa sigue en la vista de detalle.
+ */
+function mesAnio(dmy) {
+  if (!dmy) return '';
+  const p = String(dmy).split('-');
+  return p.length === 3 ? `${p[1]}-${p[2]}` : String(dmy);
+}
 function ProjectCard({
   p,
   onOpen
@@ -615,23 +625,15 @@ function ProjectCard({
     label: p.estadoLabel
   }), /*#__PURE__*/React.createElement("span", {
     className: "code"
-  }, p.codigo)), /*#__PURE__*/React.createElement("h3", null, p.nombre), /*#__PURE__*/React.createElement("div", {
+  }, p.codigo)), /*#__PURE__*/React.createElement("h3", null, p.nombre), (p.descripcionProyecto || p.sub) && /*#__PURE__*/React.createElement("div", {
     className: "addr"
-  }, p.sub), /*#__PURE__*/React.createElement("div", {
+  }, p.descripcionProyecto || p.sub), mesAnio(p.fechaEntrega) && /*#__PURE__*/React.createElement("div", {
     className: "proj-meta"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
     className: "l"
-  }, "Extensi\xF3n"), /*#__PURE__*/React.createElement("span", {
+  }, "Entrega"), /*#__PURE__*/React.createElement("span", {
     className: "v"
-  }, p.extension)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    className: "l"
-  }, p.estado === 'en-ejecucion' ? 'Inicio' : 'Entrega'), /*#__PURE__*/React.createElement("span", {
-    className: "v"
-  }, p.estado === 'en-ejecucion' ? p.fechaInicio : p.fechaEntrega)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    className: "l"
-  }, "Dise\xF1o"), /*#__PURE__*/React.createElement("span", {
-    className: "v"
-  }, p.diseno))), p.estado === 'en-ejecucion' && /*#__PURE__*/React.createElement("div", {
+  }, mesAnio(p.fechaEntrega)))), p.estado === 'en-ejecucion' && /*#__PURE__*/React.createElement("div", {
     className: "progress accent"
   }, /*#__PURE__*/React.createElement("i", {
     style: {
@@ -1597,10 +1599,13 @@ function AutoAtencionModal({
     onChange: e => setProyecto(e.target.value)
   }, /*#__PURE__*/React.createElement("option", {
     value: ""
-  }, "\u2014 Selecciona un proyecto \u2014"), data.proyectos.map(p => /*#__PURE__*/React.createElement("option", {
-    key: p.id,
-    value: p.codigo + ' — ' + p.nombre
-  }, p.codigo, " \u2014 ", p.nombre)))), /*#__PURE__*/React.createElement("div", {
+  }, "\u2014 Selecciona un proyecto \u2014"), data.proyectos.map(p => {
+    const etiqueta = p.nombre.includes(p.codigo) ? p.nombre : `${p.codigo} — ${p.nombre}`;
+    return /*#__PURE__*/React.createElement("option", {
+      key: p.id,
+      value: etiqueta
+    }, etiqueta);
+  }))), /*#__PURE__*/React.createElement("div", {
     className: "field",
     style: {
       marginBottom: 0

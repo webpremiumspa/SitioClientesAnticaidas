@@ -134,9 +134,12 @@ function AutoAtencionModal({ data, onClose }) {
         <label htmlFor="proyecto">Proyecto relacionado <span style={{ color: 'var(--ink-3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span></label>
         <select id="proyecto" value={proyecto} onChange={e => setProyecto(e.target.value)}>
           <option value="">— Selecciona un proyecto —</option>
-          {data.proyectos.map(p => (
-            <option key={p.id} value={p.codigo + ' — ' + p.nombre}>{p.codigo} — {p.nombre}</option>
-          ))}
+          {/* Si el proyecto aun no tiene nombre, `nombre` ya es "Proyecto <codigo>":
+              anteponerle el codigo otra vez daria "ACB5925 — Proyecto ACB5925". */}
+          {data.proyectos.map(p => {
+            const etiqueta = p.nombre.includes(p.codigo) ? p.nombre : `${p.codigo} — ${p.nombre}`;
+            return <option key={p.id} value={etiqueta}>{etiqueta}</option>;
+          })}
         </select>
       </div>
 

@@ -187,8 +187,26 @@ function mapProyecto(pRow, registrosDelProyecto = [], statusMap = {}, finalOrden
   return {
     id: String(codigo).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     codigo,
-    nombre: pick(pRow, 'NOMBRE DEL PROYECTO') || pick(pRow, 'DIRECCION DE INSTALACION') || codigo,
+    // NOMBRE DEL PROYECTO y DESCRIPCION PROYECTO se empezaron a completar en
+    // AppSheet en octubre de 2026: la mayoría de los proyectos antiguos los
+    // trae vacíos. Por eso ambos degradan a lo que se mostraba antes (la
+    // dirección y el tipo de sistema) y cada proyecto "mejora" solo en cuanto
+    // alguien llena su columna, sin desplegar nada.
+    // Sin NOMBRE DEL PROYECTO se usa "Proyecto <codigo>": es unico por proyecto
+    // (dos proyectos del mismo cliente no quedan con el mismo titulo) y se lee
+    // como lo que es, un marcador hasta que alguien escriba el nombre real.
+    // NO se cae a la direccion: no es un nombre y confunde. La direccion sigue
+    // visible en la vista de detalle.
+    // Las dos grafías a propósito: la tabla mezcla ambas convenciones
+    // (FECHA_DE_INICIO con guiones bajos, 'CODIGO DE PROYECTO' con espacios) y
+    // esta columna no está certificada. Si alguna vez se confirma, dejar una.
+    nombre: pick(pRow, 'NOMBRE DEL PROYECTO', 'NOMBRE_DEL_PROYECTO')
+      || (codigo ? `Proyecto ${codigo}` : 'Proyecto'),
     sub: tipoSistema,
+    // Texto libre que escribe Anticaidas por proyecto. Lo usa el subtítulo de
+    // la tarjeta del dashboard; si viene vacío, la tarjeta cae a `sub`.
+    // Nombre de columna CERTIFICADO contra AppSheet: va con guiones bajos.
+    descripcionProyecto: pick(pRow, 'DESCRIPCION_PROYECTO'),
     direccion: pick(pRow, 'DIRECCION DE INSTALACION', 'DIRECCION'),
     comuna,
     region,

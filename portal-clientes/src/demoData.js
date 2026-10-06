@@ -22,7 +22,10 @@ function proyectos() {
     {
       id: 'inacap-vitacura-02103',
       codigo: 'AFF4262-02103',
-      nombre: 'INACAP SEDE VITACURA',
+      // Simula el caso MAS COMUN en produccion: NOMBRE DEL PROYECTO vacio en
+      // AppSheet. El mapeo real pone "Proyecto <codigo>"; aqui va escrito tal
+      // cual porque los datos demo no pasan por mapping.js.
+      nombre: 'Proyecto AFF4262-02103',
       sub: 'Línea de vida horizontal · cubierta edificio docente',
       direccion: 'Av Vitacura 10151, Vitacura',
       comuna: 'Vitacura',
@@ -53,6 +56,9 @@ function proyectos() {
       codigo: 'AFF4262-01841',
       nombre: 'INACAP SEDE ÑUÑOA — LV Norte',
       sub: 'Línea de vida horizontal · cubierta acceso norte',
+      // Sólo este proyecto demo trae DESCRIPCION PROYECTO: los otros dos
+      // quedan sin ella a propósito, para ver el fallback de la tarjeta.
+      descripcionProyecto: 'Sistema de protección perimetral para mantención de equipos de climatización en cubierta.',
       direccion: 'Brown Nte. 290, Ñuñoa',
       comuna: 'Ñuñoa',
       region: 'Metropolitana',
