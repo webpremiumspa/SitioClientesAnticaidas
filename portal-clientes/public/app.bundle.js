@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.6.2";
-window.__APP_BUILD__ = "2d413270";
+window.__APP_VERSION__ = "1.6.3";
+window.__APP_BUILD__ = "804685e8";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -1423,11 +1423,11 @@ function AutoAtencionModal({
     }, /*#__PURE__*/React.createElement(Ico.check, {
       width: "20",
       height: "20"
-    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, data.ejecutivo.nombre), " recibi\xF3 tu mensaje. Te contactar\xE1 al correo\xA0", /*#__PURE__*/React.createElement("span", {
+    }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("strong", null, data.ejecutivo.nombre), " recibi\xF3 tu mensaje. Te responder\xE1 a tu correo registrado,\xA0", /*#__PURE__*/React.createElement("span", {
       style: {
         fontFamily: 'var(--font-mono)'
       }
-    }, data.cliente.email), " dentro de las pr\xF3ximas 24 horas h\xE1biles.")), /*#__PURE__*/React.createElement("div", {
+    }, data.cliente.email), ", dentro de las pr\xF3ximas 24 horas h\xE1biles.")), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 16,
         padding: 16,

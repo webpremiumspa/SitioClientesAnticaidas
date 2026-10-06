@@ -86,8 +86,11 @@ function AutoAtencionModal({ data, onClose }) {
         <div className="success">
           <Ico.check width="20" height="20" />
           <div>
-            <strong>{data.ejecutivo.nombre}</strong> recibió tu mensaje. Te contactará al correo&nbsp;
-            <span style={{ fontFamily: 'var(--font-mono)' }}>{data.cliente.email}</span> dentro de las próximas 24 horas hábiles.
+            {/* Es el correo del CLIENTE (a donde le responden), no el destinatario
+                de la solicitud. Decia "te contactara al correo X" y se leia como
+                si la solicitud se hubiera enviado a X. */}
+            <strong>{data.ejecutivo.nombre}</strong> recibió tu mensaje. Te responderá a tu correo registrado,&nbsp;
+            <span style={{ fontFamily: 'var(--font-mono)' }}>{data.cliente.email}</span>, dentro de las próximas 24 horas hábiles.
           </div>
         </div>
         <div style={{
