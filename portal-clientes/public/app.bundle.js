@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.6.1";
-window.__APP_BUILD__ = "4acf5b84";
+window.__APP_VERSION__ = "1.6.2";
+window.__APP_BUILD__ = "2d413270";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -1575,7 +1575,13 @@ function SolicitarModal({
     onClose: onClose,
     footer: /*#__PURE__*/React.createElement(React.Fragment, null, err && /*#__PURE__*/React.createElement("span", {
       className: "form-err"
-    }, err), /*#__PURE__*/React.createElement("button", {
+    }, err), !err && !valid && /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 13,
+        color: 'var(--ink-3)',
+        marginRight: 'auto'
+      }
+    }, "Completa ", !form.direccion.trim() || form.direccion.trim().length <= 4 ? 'la dirección de la instalación' : 'la extensión aproximada', "."), /*#__PURE__*/React.createElement("button", {
       className: "btn ghost",
       onClick: onClose
     }, "Cancelar"), /*#__PURE__*/React.createElement("button", {

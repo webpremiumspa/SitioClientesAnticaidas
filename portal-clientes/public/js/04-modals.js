@@ -220,6 +220,14 @@ function SolicitarModal({ data, onClose }) {
       footer={
         <>
           {err && <span className="form-err">{err}</span>}
+          {/* Sin esto el boton quedaba deshabilitado sin explicar por que. */}
+          {!err && !valid && (
+            <span style={{ fontSize: 13, color: 'var(--ink-3)', marginRight: 'auto' }}>
+              Completa {!form.direccion.trim() || form.direccion.trim().length <= 4
+                ? 'la dirección de la instalación'
+                : 'la extensión aproximada'}.
+            </span>
+          )}
           <button className="btn ghost" onClick={onClose}>Cancelar</button>
           <button className="btn accent" onClick={submit} disabled={busy || !valid}>
             {busy ? 'Enviando…' : 'Enviar solicitud'}
