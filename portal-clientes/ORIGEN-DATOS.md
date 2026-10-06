@@ -135,7 +135,7 @@ Se usa `REGISTRO.PROX MANTENCION` (del primer registro del proyecto; todos compa
 | Footer del login | "ANTICAIDAS SpA · RUT 77.096.487-3" |
 | Login | Correo de soporte `contacto@anticaidas.cl` |
 | Ejecutivo | Horario "Disponible Lun–Vie 09:00–18:00" |
-| Auto-atención | Opciones (Inspección anual, Falla, Mantención, Ampliación, Capacitación, Otra) |
+| Postventa | Opciones (Inspección anual, Falla, Mantención, Ampliación, Capacitación, Otra) |
 
 ---
 

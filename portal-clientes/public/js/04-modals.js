@@ -1,5 +1,5 @@
 /* ================================================================
-   MODALS — Solicitar, Auto-atención, Contacto
+   MODALS — Solicitar, Postventa, Contacto
    ================================================================ */
 
 function Modal({ title, sub, onClose, children, footer }) {
@@ -26,7 +26,7 @@ function Modal({ title, sub, onClose, children, footer }) {
   );
 }
 
-/* ----- Auto-atención ----- */
+/* ----- Postventa ----- */
 const AUTO_TOPICS = [
   'Inspección anual',
   'Falla / componente dañado',
@@ -65,7 +65,7 @@ function AutoAtencionModal({ data, onClose }) {
     if (!topic || desc.trim().length < 10 || busy) return;
     setBusy(true);
     setErr('');
-    const r = await enviarSolicitud('auto-atencion', {
+    const r = await enviarSolicitud('postventa', {
       tema: topic,
       proyecto: proyecto,
       descripcion: desc.trim(),
@@ -107,7 +107,7 @@ function AutoAtencionModal({ data, onClose }) {
 
   return (
     <Modal
-      title="Auto-atención"
+      title="Postventa"
       sub="Describe tu requerimiento y nuestro ejecutivo te contactará."
       onClose={onClose}
       footer={
@@ -162,7 +162,7 @@ function AutoAtencionModal({ data, onClose }) {
 /* ----- Solicitar nuevo proyecto ----- */
 function SolicitarModal({ data, onClose }) {
   const [form, setForm] = useState({
-    tipo: 'LV HORIZONTAL',
+    tipo: 'LÍNEA DE VIDA',
     direccion: '',
     extension: '',
     usuarios: '1',
@@ -231,7 +231,10 @@ function SolicitarModal({ data, onClose }) {
       <div className="field">
         <label>Tipo de sistema</label>
         <div className="chip-row">
-          {['LV HORIZONTAL', 'LV VERTICAL', 'PUNTOS DE ANCLAJE', 'PASARELA', 'OTRO'].map(t => (
+          {/* Una sola opción de línea de vida: al cliente que cotiza no le
+              corresponde decidir si es horizontal o vertical, eso se define en
+              la visita técnica. */}
+          {['LÍNEA DE VIDA', 'PUNTOS DE ANCLAJE', 'PASARELA', 'OTRO'].map(t => (
             <button key={t} className={form.tipo === t ? 'on' : ''} onClick={() => upd('tipo', t)}>{t}</button>
           ))}
         </div>

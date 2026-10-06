@@ -55,7 +55,11 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal, onBack }) {
           <div style={{ flex: 1, minWidth: 280 }}>
             <div className="code">{project.codigo}</div>
             <h1>{project.nombre}</h1>
-            <div className="addr">{project.sub}</div>
+            {/* DESCRIPCION_PROYECTO de AppSheet, igual que en la tarjeta del
+                dashboard; mientras esa columna este vacia cae al tipo de sistema. */}
+            {(project.descripcionProyecto || project.sub) && (
+              <div className="addr">{project.descripcionProyecto || project.sub}</div>
+            )}
             <div style={{ marginTop: 14 }}>
               <StatusPill estado={project.estado} label={project.estadoLabel} />
             </div>
@@ -72,29 +76,6 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal, onBack }) {
           </div>
         </div>
 
-        <div className="facts">
-          <div>
-            <div className="l">Tipo de sistema</div>
-            <div className="v">{project.tipoSistema}</div>
-          </div>
-          <div>
-            <div className="l">Extensión total</div>
-            <div className="v">{project.extension}</div>
-          </div>
-          <div>
-            <div className="l">Usuarios simultáneos</div>
-            <div className="v">{project.cantidadUsuarios}</div>
-          </div>
-          <div>
-            <div className="l">Fecha ejecución</div>
-            <div className="v">{project.fechaInicio}</div>
-          </div>
-          <div>
-            <div className="l">{project.fechaEntrega ? 'Fecha entrega' : 'Próximo hito'}</div>
-            <div className="v">{project.fechaEntrega || project.proximoHito.split('—')[1]?.trim()}</div>
-          </div>
-        </div>
-
         {project.estado === 'en-ejecucion' && (
           <div style={{ marginTop: 24 }}>
             <div style={{
@@ -107,51 +88,13 @@ function ProjectDetail({ data, project, onOpenFolder, onOpenModal, onBack }) {
             <div className="progress accent" style={{ background: 'var(--border-dark-2)' }}>
               <i style={{ width: (project.progreso * 100) + '%' }}></i>
             </div>
-            <div style={{ marginTop: 10, fontSize: 13, color: 'var(--ink-on-dark-2)' }}>
-              <strong style={{ color: 'var(--ink-on-dark)' }}>Próximo:</strong> {project.proximoHito}
-            </div>
+            {project.proximoHito && (
+              <div style={{ marginTop: 10, fontSize: 13, color: 'var(--ink-on-dark-2)' }}>
+                <strong style={{ color: 'var(--ink-on-dark)' }}>Próximo:</strong> {project.proximoHito}
+              </div>
+            )}
           </div>
         )}
-      </div>
-
-      <div style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-l)',
-        padding: '22px 24px',
-        marginBottom: 28,
-        display: 'grid',
-        gridTemplateColumns: '1.4fr 1fr 1fr',
-        gap: 28,
-      }}>
-        <div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Descripción
-          </div>
-          <p style={{ margin: 0, color: 'var(--ink-2)', fontSize: 14, lineHeight: 1.55 }}>
-            {project.descripcion}
-          </p>
-        </div>
-        <div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Equipo Anticaidas
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.7 }}>
-            <div><span style={{ color: 'var(--ink-3)' }}>Diseño · </span>{project.diseno}</div>
-            <div><span style={{ color: 'var(--ink-3)' }}>Instalador · </span>{project.instalador}</div>
-            <div><span style={{ color: 'var(--ink-3)' }}>Validado por · </span>{project.validador}</div>
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 8 }}>
-            Contacto del proyecto
-          </div>
-          <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.7 }}>
-            <div><span style={{ color: 'var(--ink-3)' }}>Solicitante · </span>{project.solicitante}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{data.cliente.email}</div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{data.cliente.telefono}</div>
-          </div>
-        </div>
       </div>
 
       <div className="section-title">

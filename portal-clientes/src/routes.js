@@ -156,7 +156,7 @@ router.get('/docs/zip', requireAuth, async (req, res) => {
 });
 
 /* ===================== Solicitudes del portal =====================
-   Los formularios "Auto-atención" y "Solicitar nuevo proyecto" envían aquí.
+   Los formularios "Postventa" y "Solicitar nuevo proyecto" envían aquí.
    El correo va a EJECUTIVO_EMAIL, con Reply-To del cliente autenticado.
    Los datos del cliente NO se toman del body: se leen del RUT en sesión, para
    que nadie pueda suplantar a otro cliente en el correo. */
@@ -165,8 +165,8 @@ router.get('/docs/zip', requireAuth, async (req, res) => {
 const solicitudLimiter = rateLimit({ prefix: 'sol-form', windowMs: 15 * 60 * 1000, max: 6 });
 
 const TIPOS_SOLICITUD = {
-  'auto-atencion': {
-    titulo: 'Auto-atención',
+  postventa: {
+    titulo: 'Postventa',
     campos: [
       ['tema', 'Tema', 120, true],
       ['proyecto', 'Proyecto relacionado', 200, false],

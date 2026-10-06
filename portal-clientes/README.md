@@ -180,7 +180,7 @@ Si el pie sigue mostrando el build anterior, lo que quedó cacheado es
 
 ### Formularios del portal
 
-"Auto-atención" y "Solicitar nuevo proyecto" envían a `POST /api/solicitud`,
+"Postventa" y "Solicitar nuevo proyecto" envían a `POST /api/solicitud`,
 que manda un correo a **`EJECUTIVO_EMAIL`** con `Reply-To` del cliente (para
 responderle directo). El cliente NO va en copia.
 

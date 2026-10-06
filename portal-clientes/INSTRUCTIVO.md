@@ -49,7 +49,7 @@ Cada proyecto se muestra como una tarjeta con:
 | Tarjeta | Qué hace |
 |---|---|
 | **Tu ejecutivo de cuenta** | Muestra nombre, cargo y horario. **Contactar** (correo) y **Llamar** (teléfono). |
-| **Auto-atención** | Describe un requerimiento y tu ejecutivo te contacta. |
+| **Postventa** | Describe un requerimiento y tu ejecutivo te contacta. |
 | **Solicitar nuevo proyecto** | Cotiza una nueva línea de vida o sistema anticaídas. |
 | **Próxima inspección** | Muestra la mantención/inspección **más próxima** del cliente (proyecto + fecha). Se oculta si no hay ninguna futura. |
 
@@ -94,7 +94,7 @@ Al abrir una carpeta se ve la lista de documentos y un visor:
 | Acción | Para qué sirve |
 |---|---|
 | **Contactar ejecutivo** | Muestra los datos de contacto de tu ejecutivo de cuenta. |
-| **Auto-atención** | Envías un requerimiento (inspección, falla, mantención, ampliación, capacitación…) y el ejecutivo te contacta. |
+| **Postventa** | Envías un requerimiento (inspección, falla, mantención, ampliación, capacitación…) y el ejecutivo te contacta. |
 | **Solicitar nuevo proyecto** | Solicitas la cotización de una nueva instalación. |
 
 ---

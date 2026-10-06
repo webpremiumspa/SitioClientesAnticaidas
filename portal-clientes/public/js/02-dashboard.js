@@ -236,7 +236,7 @@ function Dashboard({ data, onOpenProject, onOpenModal }) {
         <button className="quick-action accent" onClick={() => onOpenModal('auto')}>
           <div className="ico"><Ico.spark width="18" height="18" /></div>
           <div>
-            <div className="t">Auto-atención</div>
+            <div className="t">Postventa</div>
             <div className="d">Describe tu requerimiento y nuestro ejecutivo te contactará.</div>
           </div>
         </button>

@@ -1,7 +1,7 @@
 // Bundle generado por scripts/build-frontend.js — NO editar a mano.
 "use strict";
-window.__APP_VERSION__ = "1.5.0";
-window.__APP_BUILD__ = "a08e7ee6";
+window.__APP_VERSION__ = "1.6.0";
+window.__APP_BUILD__ = "4acf5b84";
 
 /* ===== 00-data.js ===== */
 /* Helper de recursos. En este despliegue las imágenes se sirven como archivos
@@ -817,7 +817,7 @@ function Dashboard({
     height: "18"
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "t"
-  }, "Auto-atenci\xF3n"), /*#__PURE__*/React.createElement("div", {
+  }, "Postventa"), /*#__PURE__*/React.createElement("div", {
     className: "d"
   }, "Describe tu requerimiento y nuestro ejecutivo te contactar\xE1."))), /*#__PURE__*/React.createElement("button", {
     className: "quick-action",
@@ -950,9 +950,9 @@ function ProjectDetail({
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "code"
-  }, project.codigo), /*#__PURE__*/React.createElement("h1", null, project.nombre), /*#__PURE__*/React.createElement("div", {
+  }, project.codigo), /*#__PURE__*/React.createElement("h1", null, project.nombre), (project.descripcionProyecto || project.sub) && /*#__PURE__*/React.createElement("div", {
     className: "addr"
-  }, project.sub), /*#__PURE__*/React.createElement("div", {
+  }, project.descripcionProyecto || project.sub), /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 14
     }
@@ -979,29 +979,7 @@ function ProjectDetail({
   }, /*#__PURE__*/React.createElement(Ico.mail, {
     width: "14",
     height: "14"
-  }), "Contactar ejecutivo"))), /*#__PURE__*/React.createElement("div", {
-    className: "facts"
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "l"
-  }, "Tipo de sistema"), /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, project.tipoSistema)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "l"
-  }, "Extensi\xF3n total"), /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, project.extension)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "l"
-  }, "Usuarios simult\xE1neos"), /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, project.cantidadUsuarios)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "l"
-  }, "Fecha ejecuci\xF3n"), /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, project.fechaInicio)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    className: "l"
-  }, project.fechaEntrega ? 'Fecha entrega' : 'Próximo hito'), /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, project.fechaEntrega || project.proximoHito.split('—')[1]?.trim()))), project.estado === 'en-ejecucion' && /*#__PURE__*/React.createElement("div", {
+  }), "Contactar ejecutivo"))), project.estado === 'en-ejecucion' && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 24
     }
@@ -1026,7 +1004,7 @@ function ProjectDetail({
     style: {
       width: project.progreso * 100 + '%'
     }
-  })), /*#__PURE__*/React.createElement("div", {
+  })), project.proximoHito && /*#__PURE__*/React.createElement("div", {
     style: {
       marginTop: 10,
       fontSize: 13,
@@ -1037,89 +1015,6 @@ function ProjectDetail({
       color: 'var(--ink-on-dark)'
     }
   }, "Pr\xF3ximo:"), " ", project.proximoHito))), /*#__PURE__*/React.createElement("div", {
-    style: {
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border-light)',
-      borderRadius: 'var(--radius-l)',
-      padding: '22px 24px',
-      marginBottom: 28,
-      display: 'grid',
-      gridTemplateColumns: '1.4fr 1fr 1fr',
-      gap: 28
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'var(--ink-3)',
-      fontWeight: 600,
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      marginBottom: 8
-    }
-  }, "Descripci\xF3n"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      margin: 0,
-      color: 'var(--ink-2)',
-      fontSize: 14,
-      lineHeight: 1.55
-    }
-  }, project.descripcion)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'var(--ink-3)',
-      fontWeight: 600,
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      marginBottom: 8
-    }
-  }, "Equipo Anticaidas"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      color: 'var(--ink)',
-      lineHeight: 1.7
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: 'var(--ink-3)'
-    }
-  }, "Dise\xF1o \xB7 "), project.diseno), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: 'var(--ink-3)'
-    }
-  }, "Instalador \xB7 "), project.instalador), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: 'var(--ink-3)'
-    }
-  }, "Validado por \xB7 "), project.validador))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: 'var(--ink-3)',
-      fontWeight: 600,
-      letterSpacing: '0.06em',
-      textTransform: 'uppercase',
-      marginBottom: 8
-    }
-  }, "Contacto del proyecto"), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 14,
-      color: 'var(--ink)',
-      lineHeight: 1.7
-    }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("span", {
-    style: {
-      color: 'var(--ink-3)'
-    }
-  }, "Solicitante \xB7 "), project.solicitante), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: 'var(--font-mono)',
-      fontSize: 13
-    }
-  }, data.cliente.email), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontFamily: 'var(--font-mono)',
-      fontSize: 13
-    }
-  }, data.cliente.telefono)))), /*#__PURE__*/React.createElement("div", {
     className: "section-title"
   }, /*#__PURE__*/React.createElement("h2", null, "Documentaci\xF3n del proyecto"), /*#__PURE__*/React.createElement("span", {
     className: "sub"
@@ -1422,7 +1317,7 @@ window.FOLDER_ICONS = FOLDER_ICONS;
 
 /* ===== 04-modals.js ===== */
 /* ================================================================
-   MODALS — Solicitar, Auto-atención, Contacto
+   MODALS — Solicitar, Postventa, Contacto
    ================================================================ */
 
 function Modal({
@@ -1462,7 +1357,7 @@ function Modal({
   }, footer)));
 }
 
-/* ----- Auto-atención ----- */
+/* ----- Postventa ----- */
 const AUTO_TOPICS = ['Inspección anual', 'Falla / componente dañado', 'Mantención preventiva', 'Ampliación de sistema', 'Capacitación de usuarios', 'Otra'];
 
 /* Envía un formulario del portal al ejecutivo. Devuelve { ok } o { error }.
@@ -1506,7 +1401,7 @@ function AutoAtencionModal({
     if (!topic || desc.trim().length < 10 || busy) return;
     setBusy(true);
     setErr('');
-    const r = await enviarSolicitud('auto-atencion', {
+    const r = await enviarSolicitud('postventa', {
       tema: topic,
       proyecto: proyecto,
       descripcion: desc.trim()
@@ -1558,7 +1453,7 @@ function AutoAtencionModal({
     }, desc)));
   }
   return /*#__PURE__*/React.createElement(Modal, {
-    title: "Auto-atenci\xF3n",
+    title: "Postventa",
     sub: "Describe tu requerimiento y nuestro ejecutivo te contactar\xE1.",
     onClose: onClose,
     footer: /*#__PURE__*/React.createElement(React.Fragment, null, err && /*#__PURE__*/React.createElement("span", {
@@ -1628,7 +1523,7 @@ function SolicitarModal({
   onClose
 }) {
   const [form, setForm] = useState({
-    tipo: 'LV HORIZONTAL',
+    tipo: 'LÍNEA DE VIDA',
     direccion: '',
     extension: '',
     usuarios: '1',
@@ -1695,7 +1590,7 @@ function SolicitarModal({
     className: "field"
   }, /*#__PURE__*/React.createElement("label", null, "Tipo de sistema"), /*#__PURE__*/React.createElement("div", {
     className: "chip-row"
-  }, ['LV HORIZONTAL', 'LV VERTICAL', 'PUNTOS DE ANCLAJE', 'PASARELA', 'OTRO'].map(t => /*#__PURE__*/React.createElement("button", {
+  }, ['LÍNEA DE VIDA', 'PUNTOS DE ANCLAJE', 'PASARELA', 'OTRO'].map(t => /*#__PURE__*/React.createElement("button", {
     key: t,
     className: form.tipo === t ? 'on' : '',
     onClick: () => upd('tipo', t)
